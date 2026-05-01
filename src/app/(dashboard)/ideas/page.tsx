@@ -7,7 +7,6 @@ import { useIdeas, type Idea } from '@/hooks/useIdeas'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { Card } from '@/components/ui/Card'
 import { clsx } from 'clsx'
 
 type StatusFilter = 'all' | 'raw' | 'ready' | 'used'
@@ -48,7 +47,7 @@ function IdeaCard({
   onWriteFrom: (idea: Idea) => void
 }) {
   return (
-    <div className="break-inside-avoid mb-4 group bg-surface border border-border rounded-card p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01]">
+    <div className="break-inside-avoid mb-4 group bg-surface border border-border rounded-card p-4 shadow-card transition-all duration-200 hover:shadow-card-hover hover:scale-[1.01] hover:border-l-2 hover:border-l-[#4F46E5]">
       <p className="text-sm text-text-primary leading-relaxed mb-3 whitespace-pre-wrap">
         {idea.content}
       </p>
@@ -174,8 +173,8 @@ export default function IdeasPage() {
       </div>
 
       {/* Quick Capture */}
-      <Card>
-        <div className="p-4 space-y-3">
+      <div className="bg-white rounded-xl border border-[#E8E5E0] p-4 mb-6 shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]">
+        <div className="space-y-3">
           <Textarea
             ref={textareaRef}
             value={content}
@@ -215,31 +214,33 @@ export default function IdeasPage() {
               <kbd className="px-1 py-0.5 rounded bg-border text-text-secondary font-mono">↵</kbd>
               {' to save'}
             </p>
-            <Button onClick={handleSave} loading={saving} disabled={!content.trim()}>
-              Save idea
-            </Button>
+            {content.trim().length > 0 && (
+              <Button onClick={handleSave} loading={saving}>
+                Save idea
+              </Button>
+            )}
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Filters + Search */}
       <div className="flex items-center gap-4 flex-wrap overflow-x-auto">
-        <div className="flex items-center bg-surface border border-border rounded-button p-0.5 gap-0.5">
+        <div className="flex items-center border-b border-[#E8E5E0]">
           {(['all', 'raw', 'ready', 'used'] as StatusFilter[]).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
               className={clsx(
-                'px-3 py-1.5 rounded text-sm font-medium capitalize transition-colors',
+                'px-3 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px',
                 filter === f
-                  ? 'bg-accent text-white'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                  ? 'border-[#4F46E5] text-[#4F46E5]'
+                  : 'border-transparent text-text-secondary hover:text-text-primary'
               )}
             >
               {f}
               <span className={clsx(
                 'ml-1.5 text-xs',
-                filter === f ? 'text-white/70' : 'text-text-secondary'
+                filter === f ? 'text-[#4F46E5]/70' : 'text-text-secondary'
               )}>
                 {counts[f]}
               </span>

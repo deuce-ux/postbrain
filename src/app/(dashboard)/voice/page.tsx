@@ -43,11 +43,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
           key={i}
           className={clsx(
             'rounded-full transition-all duration-300',
-            i === current
-              ? 'w-6 h-2 bg-accent'
-              : i < current
-              ? 'w-2 h-2 bg-accent/40'
-              : 'w-2 h-2 bg-border'
+            i === current ? 'w-3 h-3 bg-[#4F46E5]' : 'w-2 h-2 bg-[#E8E5E0]'
           )}
         />
       ))}
@@ -256,8 +252,8 @@ export default function VoicePage() {
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
-            <Button onClick={() => setStep(1)}>
+          <div className="pt-2">
+            <Button onClick={() => setStep(1)} className="w-full">
               Continue <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -281,19 +277,22 @@ export default function VoicePage() {
                     : 'border-border bg-surface hover:border-accent/40'
                 )}
               >
-                <p className={clsx('font-medium text-sm mb-1', voiceStyle === id ? 'text-accent' : 'text-text-primary')}>
-                  {label}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className={clsx('font-medium text-sm mb-1', voiceStyle === id ? 'text-accent' : 'text-text-primary')}>
+                    {label}
+                  </p>
+                  {voiceStyle === id && <Check className="h-4 w-4 text-accent shrink-0" />}
+                </div>
                 <p className="text-xs text-text-secondary leading-relaxed">{description}</p>
               </button>
             ))}
           </div>
 
-          <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setStep(0)}>
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setStep(0)}>
               <ChevronLeft className="h-4 w-4" /> Back
             </Button>
-            <Button onClick={() => setStep(2)}>
+            <Button onClick={() => setStep(2)} className="flex-1">
               Continue <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -363,7 +362,7 @@ export default function VoicePage() {
 
           {/* Analysis result card */}
           {analysis && (
-            <div className="bg-accent-light border border-accent/20 rounded-card p-5 space-y-3 animate-slide-up">
+            <div className="bg-[#EEF2FF] border border-[#4F46E5]/20 rounded-xl p-4 space-y-3 animate-slide-up">
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
                   <Check className="h-3 w-3 text-white" />
@@ -387,11 +386,11 @@ export default function VoicePage() {
             </div>
           )}
 
-          <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setStep(1)}>
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" onClick={() => setStep(1)}>
               <ChevronLeft className="h-4 w-4" /> Back
             </Button>
-            <Button onClick={handleSave} loading={saving}>
+            <Button onClick={handleSave} loading={saving} className="flex-1">
               {saving ? 'Saving…' : 'Save Voice DNA'}
             </Button>
           </div>

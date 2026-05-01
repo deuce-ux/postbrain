@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { FileText, Lightbulb, Hash, BarChart2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -100,7 +99,7 @@ export default function InsightsPage() {
     switch (platform) {
       case 'twitter': return 'bg-black'
       case 'linkedin': return 'bg-[#0077B5]'
-      case 'instagram': return 'bg-gradient-to-r from-purple-500 to-pink-500'
+      case 'instagram': return 'bg-[#E1306C]'
       case 'facebook': return 'bg-[#1877F2]'
       default: return 'bg-border'
     }
@@ -118,24 +117,22 @@ export default function InsightsPage() {
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card
+            <div
               key={stat.label}
-              className="animate-slide-up"
+              className="bg-white rounded-xl border border-[#E8E5E0] p-5 animate-slide-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className="p-4">
-                <div className="p-2 rounded-lg bg-accent-light w-fit mb-3">
-                  <Icon className="h-4 w-4 text-accent" />
-                </div>
-                <p className={clsx(
-                  'text-xl md:text-2xl font-serif text-text-primary',
-                  stat.isPlatform && 'capitalize'
-                )}>
-                  {loading ? '—' : stat.value}
-                </p>
-                <p className="text-xs text-text-secondary">{stat.label}</p>
+              <div className="p-2 rounded-lg bg-accent-light w-fit mb-3">
+                <Icon className="h-4 w-4 text-accent" />
               </div>
-            </Card>
+              <p className={clsx(
+                'text-3xl font-semibold text-[#1A1714]',
+                stat.isPlatform && 'text-2xl capitalize'
+              )}>
+                {loading ? '—' : stat.value}
+              </p>
+              <p className="text-xs text-[#6B6560] uppercase tracking-wide mt-1">{stat.label}</p>
+            </div>
           )
         })}
       </div>
@@ -183,22 +180,26 @@ export default function InsightsPage() {
         )}
       </div>
 
-      {/* Ideas Status */}
+      {/* Ideas Pipeline */}
       <div>
-        <h2 className="text-lg font-serif text-text-primary mb-4">Ideas by Status</h2>
-        <Card className="p-4 md:p-6">
-          <div className="flex flex-wrap gap-3">
-            {['raw', 'ready', 'used'].map((status) => {
-              const count = ideas.filter(i => i.status === status).length
-              const variant = status === 'raw' ? 'muted' : status === 'ready' ? 'accent' : 'success'
-              return (
-                <Badge key={status} variant={variant}>
-                  {status}: {count}
-                </Badge>
-              )
-            })}
-          </div>
-        </Card>
+        <h2 className="text-lg font-serif text-text-primary mb-4">Ideas Pipeline</h2>
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { status: 'raw', label: 'Raw', color: 'text-[#6B6560]' },
+            { status: 'ready', label: 'Ready', color: 'text-[#4F46E5]' },
+            { status: 'used', label: 'Used', color: 'text-[#2D7D52]' },
+          ].map(({ status, label, color }) => {
+            const count = ideas.filter(i => i.status === status).length
+            return (
+              <div key={status} className="bg-white rounded-xl border border-[#E8E5E0] p-5 text-center">
+                <p className={clsx('text-3xl font-semibold', color)}>
+                  {loading ? '—' : count}
+                </p>
+                <p className="text-xs text-[#6B6560] uppercase tracking-wide mt-1">{label}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

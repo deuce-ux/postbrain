@@ -36,7 +36,7 @@ export default function Home() {
 
       {/* Hero section */}
       <main 
-        className="pt-12 md:pt-24 pb-10 md:pb-16 px-4 md:px-8"
+        className="pt-16 md:pt-24 pb-10 md:pb-16 px-4 md:px-8"
         style={{ background: 'linear-gradient(180deg, #EEF2FF 0%, #FAFAF9 40%)' }}
       >
         <div className="mx-auto max-w-3xl text-center">

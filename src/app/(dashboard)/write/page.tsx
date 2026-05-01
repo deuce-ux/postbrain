@@ -5,6 +5,7 @@ import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
   Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
 } from 'lucide-react'
+
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -83,6 +84,7 @@ export default function WritePage() {
   // Generation
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<string | null>(null)
+  const [generationProvider, setGenerationProvider] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Post-generation actions
@@ -156,6 +158,7 @@ export default function WritePage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
       setGenerated(data.content)
+      setGenerationProvider(data.provider || 'groq')
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -196,8 +199,8 @@ export default function WritePage() {
     <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-8 animate-fade-in">
 
       {/* ── Left panel: Controls ── */}
-      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface overflow-y-auto">
-        <div className="p-4 md:p-6 space-y-6">
+      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto">
+        <div className="p-4 space-y-5 bg-white rounded-xl border border-[#E8E5E0] m-4">
 
           <div>
             <h1 className="page-title">Write</h1>
@@ -237,7 +240,7 @@ export default function WritePage() {
                   key={id}
                   onClick={() => setPlatform(id)}
                   className={clsx(
-                    'flex flex-col items-center gap-1.5 py-3 px-2 rounded-button border text-xs font-medium transition-all duration-150',
+                    'flex flex-col items-center justify-center gap-1.5 h-12 px-2 rounded-button border text-xs font-medium transition-all duration-150',
                     platform === id
                       ? 'bg-accent text-white border-accent'
                       : 'bg-surface text-text-secondary border-border hover:border-accent/40 hover:text-text-primary'
@@ -259,16 +262,19 @@ export default function WritePage() {
                   key={id}
                   onClick={() => setWriteMode(id)}
                   className={clsx(
-                    'w-full text-left px-4 py-3 rounded-button border transition-all duration-150',
+                    'w-full text-left px-4 py-3 rounded-button border transition-all duration-150 flex items-start justify-between gap-2',
                     writeMode === id
                       ? 'border-accent bg-accent-light'
                       : 'border-border bg-surface hover:border-accent/40'
                   )}
                 >
-                  <p className={clsx('text-sm font-medium', writeMode === id ? 'text-accent' : 'text-text-primary')}>
-                    {label}
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">{description}</p>
+                  <div>
+                    <p className={clsx('text-sm font-medium', writeMode === id ? 'text-accent' : 'text-text-primary')}>
+                      {label}
+                    </p>
+                    <p className="text-xs text-text-secondary mt-0.5">{description}</p>
+                  </div>
+                  {writeMode === id && <Check className="h-4 w-4 text-accent shrink-0 mt-0.5" />}
                 </button>
               ))}
             </div>
@@ -357,7 +363,20 @@ export default function WritePage() {
           {/* Generated output */}
           {generated && !generating && (
             <div className="flex flex-col gap-4 animate-fade-in">
-              {/* Platform badge */}
+              {/* Top bar */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-text-secondary">Generated Post</span>
+                <span className={clsx(
+                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                  generationProvider === 'gemini'
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'bg-orange-50 text-orange-600'
+                )}>
+                  {generationProvider === 'gemini' ? 'Gemini' : 'Groq'}
+                </span>
+              </div>
+
+              {/* Platform + counts */}
               <div className="flex items-center gap-2">
                 <Badge variant="accent">{PLATFORM_BADGE_LABEL[platform]}</Badge>
                 <span className="text-xs text-text-secondary">

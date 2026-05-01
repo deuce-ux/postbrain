@@ -67,6 +67,16 @@ function getPlatformLabel(platform: Platform): string {
   }
 }
 
+function getPlatformBorderColor(platform: Platform): string {
+  switch (platform) {
+    case 'twitter': return 'border-l-4 border-l-gray-900'
+    case 'linkedin': return 'border-l-4 border-l-[#0077B5]'
+    case 'instagram': return 'border-l-4 border-l-[#E1306C]'
+    case 'facebook': return 'border-l-4 border-l-[#1877F2]'
+    default: return 'border-l-4 border-l-[#4F46E5]'
+  }
+}
+
 // ─── Skeleton ────────────────────────────────────────────────────────────────
 
 function PostSkeleton() {
@@ -268,7 +278,7 @@ export default function LibraryPage() {
             return (
               <div
                 key={post.id}
-                className="bg-white border border-[#E8E5E0] rounded-xl p-5"
+                className={clsx('group bg-white border border-[#E8E5E0] rounded-xl p-5', getPlatformBorderColor(post.platform))}
               >
                 {/* Top row */}
                 <div className="flex items-center justify-between mb-3">
@@ -296,7 +306,7 @@ export default function LibraryPage() {
                 </div>
 
                 {/* Bottom row */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap opacity-0 group-hover:opacity-100 transition-opacity">
                   <Badge variant={post.status === 'published' ? 'success' : 'muted'}>
                     {post.status}
                   </Badge>
