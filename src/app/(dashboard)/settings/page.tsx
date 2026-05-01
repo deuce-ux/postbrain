@@ -94,8 +94,6 @@ export default function SettingsPage() {
         }
       } catch (e) {
         console.error('Failed to fetch profile:', e)
-      } finally {
-        setLoading(false)
       }
     }
     fetchProfile()
