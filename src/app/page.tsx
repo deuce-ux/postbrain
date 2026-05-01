@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#FAFAF9] font-sans">
       {/* Navigation bar */}
-      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0] z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0] z-50 py-4">
         <div className="mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between" style={{ maxWidth: '90rem' }}>
           <Link href="/" className="font-serif text-lg md:text-xl text-[#1A1714]">
             PostBrain
@@ -36,7 +36,7 @@ export default function Home() {
 
       {/* Hero section */}
       <main 
-        className="pt-16 md:pt-24 pb-10 md:pb-16 px-4 md:px-8"
+        className="pt-16 md:pt-24 pb-10 md:pb-16 px-4 md:px-8 mt-8 md:mt-0"
         style={{ background: 'linear-gradient(180deg, #EEF2FF 0%, #FAFAF9 40%)' }}
       >
         <div className="mx-auto max-w-3xl text-center">
