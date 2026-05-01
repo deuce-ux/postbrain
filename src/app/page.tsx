@@ -23,42 +23,42 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#FAFAF9] font-sans">
       {/* Navigation bar */}
-      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0]">
-        <div className="mx-auto px-8 py-4 flex items-center justify-between" style={{ maxWidth: '90rem' }}>
-          <Link href="/" className="font-serif text-xl text-[#1A1714]">
+      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0] z-50">
+        <div className="mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between" style={{ maxWidth: '90rem' }}>
+          <Link href="/" className="font-serif text-lg md:text-xl text-[#1A1714]">
             PostBrain
           </Link>
-          <Link href="/auth" className="text-[#6B6560] hover:text-[#1A1714] transition-colors">
+          <Link href="/auth" className="text-sm text-[#6B6560] hover:text-[#1A1714] transition-colors">
             Sign in
           </Link>
         </div>
       </nav>
 
       {/* Hero section */}
-      <main className="pt-24 pb-16 px-8">
+      <main className="pt-12 md:pt-24 pb-10 md:pb-16 px-4 md:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-serif text-5xl text-[#1A1714] leading-tight mb-6">
+          <h1 className="font-serif text-3xl md:text-5xl text-[#1A1714] leading-tight mb-4 md:mb-6">
             Write posts that sound exactly like you
           </h1>
-          <p className="text-lg text-[#6B6560] max-w-xl mx-auto mb-10 text-center">
+          <p className="text-base md:text-lg text-[#6B6560] max-w-xl mx-auto mb-6 md:mb-10 text-center">
             AI-powered content creation built for creators who care about their voice
           </p>
           <Link
             href="/auth"
-            className="inline-block bg-[#4F46E5] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors"
+            className="inline-block w-full md:w-auto bg-[#4F46E5] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors"
           >
             Start for free
           </Link>
         </div>
 
         {/* Feature cards */}
-        <div className="mx-auto max-w-4xl grid grid-cols-3 gap-6 mt-24 px-8">
+        <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-16 md:mt-24 px-0 md:px-8">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <div
                 key={feature.title}
-                className="bg-white rounded-xl p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]"
+                className="bg-white rounded-xl p-5 md:p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]"
               >
                 <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center mb-4">
                   <Icon className="w-5 h-5 text-[#4F46E5]" />

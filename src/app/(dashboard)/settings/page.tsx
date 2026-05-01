@@ -117,7 +117,7 @@ export default function SettingsPage() {
       } else {
         showToast('Failed to save')
       }
-    } catch (e) {
+    } catch {
       showToast('Failed to save')
     } finally {
       setSaving(false)
