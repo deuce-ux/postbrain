@@ -31,6 +31,14 @@ export async function POST(req: Request) {
 - Casual, friend-talking-to-friend energy
 - End with an engaging question
 - 5-7 hashtags on last line`,
+    facebook: `Write a Facebook post.
+- Opening hook that stops the scroll
+- 2-3 short conversational paragraphs
+- Personal, warm, community-oriented tone
+- End with a question to drive comments
+- 150-300 words
+- 2-3 relevant hashtags at the end
+- Emojis used naturally, not excessively`,
   }
 
   const systemPrompt = `You are a social media ghostwriter who writes in the user's exact voice.

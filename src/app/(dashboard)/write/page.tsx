@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
-  Copy, Check, RefreshCw, BookMarked, PenLine, X,
+  Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Input'
@@ -12,7 +12,7 @@ import { clsx } from 'clsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Platform = 'twitter' | 'linkedin' | 'instagram'
+type Platform = 'twitter' | 'linkedin' | 'instagram' | 'facebook'
 type WriteMode = 'from idea' | 'from hook' | 'from experience'
 type VoiceStyle = 'Conversational' | 'Professional' | 'Bold' | 'Educational'
 
@@ -27,6 +27,7 @@ const PLATFORMS: { id: Platform; label: string; Icon: React.ElementType }[] = [
   { id: 'twitter', label: 'Twitter / X', Icon: Hash },
   { id: 'linkedin', label: 'LinkedIn', Icon: Briefcase },
   { id: 'instagram', label: 'Instagram', Icon: Camera },
+  { id: 'facebook', label: 'Facebook', Icon: Users },
 ]
 
 const WRITE_MODES: { id: WriteMode; label: string; description: string }[] = [
@@ -41,6 +42,7 @@ const PLATFORM_BADGE_LABEL: Record<Platform, string> = {
   twitter: 'Twitter / X Thread',
   linkedin: 'LinkedIn Post',
   instagram: 'Instagram Caption',
+  facebook: 'Facebook Post',
 }
 
 const DEFAULT_VOICE: VoiceSettings = { style: 'Conversational', examples: '' }
@@ -229,7 +231,7 @@ export default function WritePage() {
           {/* Step 2: Platform */}
           <section className="space-y-2">
             <label className="label">Platform</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {PLATFORMS.map(({ id, label, Icon }) => (
                 <button
                   key={id}
