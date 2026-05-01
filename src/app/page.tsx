@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lightbulb, Mic, PenLine } from "lucide-react";
+import { Lightbulb, Mic, PenLine, ArrowRight } from "lucide-react";
 
 const features = [
   {
@@ -35,19 +35,22 @@ export default function Home() {
       </nav>
 
       {/* Hero section */}
-      <main className="pt-12 md:pt-24 pb-10 md:pb-16 px-4 md:px-8">
+      <main 
+        className="pt-12 md:pt-24 pb-10 md:pb-16 px-4 md:px-8"
+        style={{ background: 'linear-gradient(180deg, #EEF2FF 0%, #FAFAF9 40%)' }}
+      >
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="font-serif text-3xl md:text-5xl text-[#1A1714] leading-tight mb-4 md:mb-6">
-            Write posts that sound exactly like you
+          <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-[#1A1714] leading-tight mb-4 md:mb-6">
+            Write posts that<br className="hidden md:block" /> sound exactly like you
           </h1>
           <p className="text-base md:text-lg text-[#6B6560] max-w-xl mx-auto mb-6 md:mb-10 text-center">
             AI-powered content creation built for creators who care about their voice
           </p>
           <Link
             href="/auth"
-            className="inline-block w-full md:w-auto bg-[#4F46E5] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors"
+            className="inline-flex items-center gap-2 w-full md:w-auto bg-[#4F46E5] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors justify-center"
           >
-            Start for free
+            Start for free <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -58,9 +61,9 @@ export default function Home() {
             return (
               <div
                 key={feature.title}
-                className="bg-white rounded-xl p-5 md:p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]"
+                className="bg-white rounded-xl p-5 md:p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)] hover:-translate-y-1 transition-transform duration-200"
               >
-                <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center mb-4 p-2">
                   <Icon className="w-5 h-5 text-[#4F46E5]" />
                 </div>
                 <h3 className="font-medium text-[#1A1714] mb-2">{feature.title}</h3>

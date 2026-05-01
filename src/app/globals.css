@@ -82,4 +82,20 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Smooth page transitions */
+  .page-enter {
+    animation: fadeIn 300ms ease-out;
+  }
+}
+
+/* Better focus styles */
+*:focus-visible {
+  outline: 2px solid #4F46E5;
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
