@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
 import { Lightbulb, FileText, Send, Check } from 'lucide-react'
+import { useDashboardStats } from '@/hooks/useDashboardStats'
+import { clsx } from 'clsx'
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -22,18 +25,82 @@ function formatDate(): string {
   })
 }
 
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays < 7) return `${diffDays}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function getPlatformBadge(platform: string): { bg: string; text: string } {
+  switch (platform) {
+    case 'twitter': return { bg: 'bg-black', text: 'text-white' }
+    case 'linkedin': return { bg: 'bg-[#0077B5]', text: 'text-white' }
+    case 'instagram': return { bg: 'bg-gradient-to-r from-purple-500 to-pink-500', text: 'text-white' }
+    case 'facebook': return { bg: 'bg-[#1877F2]', text: 'text-white' }
+    default: return { bg: 'bg-border', text: 'text-text-primary' }
+  }
+}
+
+interface Post {
+  id: string
+  generated_text: string
+  platform: string
+  status: string
+  created_at: string
+}
+
+interface Idea {
+  id: string
+  content: string
+  status: string
+  created_at: string
+}
+
 export default function DashboardPage() {
-  const [ideaCount, setIdeaCount] = useState<number | null>(null)
+  const { postsWritten, ideasSaved, postsPublished, loading } = useDashboardStats()
+  const [displayName, setDisplayName] = useState<string>('there')
+  const [recentPosts, setRecentPosts] = useState<Post[]>([])
+  const [recentIdeas, setRecentIdeas] = useState<Idea[]>([])
   const [quickCapture, setQuickCapture] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    fetch('/api/ideas')
-      .then(r => r.json())
-      .then(data => Array.isArray(data) && setIdeaCount(data.length))
-      .catch(() => {})
-  }, [saved])
+    async function fetchData() {
+      try {
+        const [profileRes, postsRes, ideasRes] = await Promise.all([
+          fetch('/api/profile'),
+          fetch('/api/posts'),
+          fetch('/api/ideas')
+        ])
+        const profile = await profileRes.json()
+        const posts = await postsRes.json()
+        const ideas = await ideasRes.json()
+
+        if (profile?.display_name) {
+          setDisplayName(profile.display_name)
+        }
+        if (Array.isArray(posts)) {
+          setRecentPosts(posts.slice(0, 3))
+        }
+        if (Array.isArray(ideas)) {
+          setRecentIdeas(ideas.slice(0, 3))
+        }
+      } catch (e) {
+        console.error('Failed to fetch dashboard data:', e)
+      }
+    }
+    fetchData()
+  }, [])
 
   const handleQuickCapture = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,15 +122,17 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: 'Posts Written', value: 12, icon: FileText },
-    { label: 'Ideas Saved', value: ideaCount ?? '—', icon: Lightbulb },
-    { label: 'Posts Published', value: 8, icon: Send },
+    { label: 'Posts Written', value: postsWritten, icon: FileText },
+    { label: 'Ideas Saved', value: ideasSaved, icon: Lightbulb },
+    { label: 'Posts Published', value: postsPublished, icon: Send },
   ]
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="space-y-1">
-        <h1 className="page-title">Good {getGreeting()}, Alex</h1>
+        <h1 className="page-title text-2xl md:text-3xl">
+          Good {getGreeting()}, {displayName}
+        </h1>
         <p className="text-text-secondary">{formatDate()}</p>
       </div>
 
@@ -81,7 +150,9 @@ export default function DashboardPage() {
                   <Icon className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-serif text-text-primary">{stat.value}</p>
+                  <p className="text-2xl font-serif text-text-primary">
+                    {loading ? '—' : stat.value}
+                  </p>
                   <p className="text-sm text-text-secondary">{stat.label}</p>
                 </div>
               </div>
@@ -114,20 +185,74 @@ export default function DashboardPage() {
         </Link>
       </form>
 
-      <Card>
-        <div className="p-8 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-border mb-4 flex items-center justify-center">
-            <FileText className="h-8 w-8 text-text-secondary" />
-          </div>
-          <h3 className="font-serif text-lg text-text-primary mb-2">No posts yet</h3>
-          <p className="text-text-secondary text-sm mb-4">
-            Start writing your first post to see it here
-          </p>
-          <Link href="/write">
-            <Button variant="secondary">Create your first post</Button>
+      {/* Recent Posts Section */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-serif text-text-primary">Recent Posts</h2>
+          <Link href="/library" className="text-sm text-accent hover:underline">
+            View all
           </Link>
         </div>
-      </Card>
+        {recentPosts.length === 0 ? (
+          <Card>
+            <div className="p-6 text-center">
+              <p className="text-text-secondary text-sm">No posts yet. Start writing.</p>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recentPosts.map((post) => {
+              const badge = getPlatformBadge(post.platform)
+              return (
+                <Card key={post.id} variant="hover" className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium', badge.bg, badge.text)}>
+                      {post.platform}
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      {formatRelativeTime(post.created_at)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-primary line-clamp-2">
+                    {post.generated_text}
+                  </p>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Ideas Section */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-serif text-text-primary">Recent Ideas</h2>
+          <Link href="/ideas" className="text-sm text-accent hover:underline">
+            View all
+          </Link>
+        </div>
+        {recentIdeas.length === 0 ? (
+          <Card>
+            <div className="p-6 text-center">
+              <p className="text-text-secondary text-sm">No ideas yet. Start capturing.</p>
+            </div>
+          </Card>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {recentIdeas.map((idea) => (
+              <div
+                key={idea.id}
+                className="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-lg"
+              >
+                <span className="text-sm text-text-primary max-w-xs truncate">
+                  {idea.content}
+                </span>
+                <Badge variant="muted">{idea.status}</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
