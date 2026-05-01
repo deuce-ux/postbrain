@@ -58,43 +58,82 @@ Write mode: ${writingMode || 'from idea'}
 
 Write the complete post now. Return only the post content, no explanation.`
 
-  try {
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+  const GROQ_API_KEY = process.env.GROQ_API_KEY!
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
 
-    const response = await fetch(GEMINI_URL, {
+  async function generateWithGroq(): Promise<string> {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        contents: [{
-          parts: [{ text: userPrompt }],
-        }],
-        generationConfig: {
-          temperature: 0.85,
-          maxOutputTokens: 2048,
-        },
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.85,
+        max_tokens: 2048,
       }),
     })
+    if (!response.ok) throw new Error(`Groq error: ${response.status}`)
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+    if (!content) throw new Error('No content from Groq')
+    return content
+  }
 
+  async function generateWithGemini(): Promise<string> {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: userPrompt }] }],
+          generationConfig: {
+            temperature: 0.85,
+            maxOutputTokens: 2048,
+          },
+        }),
+      }
+    )
+    if (!response.ok) throw new Error(`Gemini error: ${response.status}`)
     const data = await response.json()
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!content) throw new Error('No content generated')
-
-    await supabase.from('generated_posts').insert({
-      user_id: user.id,
-      original_idea: idea,
-      generated_text: content,
-      platform,
-      status: 'draft',
-    })
-
-    return NextResponse.json({ content })
-  } catch (error) {
-    console.error('Generate error:', error)
-    return NextResponse.json({ error: 'Failed to generate' }, { status: 500 })
+    if (!content) throw new Error('No content from Gemini')
+    return content
   }
+
+  let content: string
+  let provider = 'groq'
+
+  try {
+    content = await generateWithGroq()
+  } catch (groqError) {
+    console.warn('Groq failed, falling back to Gemini:', groqError)
+    provider = 'gemini'
+    try {
+      content = await generateWithGemini()
+    } catch (geminiError) {
+      console.error('Both providers failed:', geminiError)
+      return NextResponse.json(
+        { error: 'Generation failed. Please try again.' },
+        { status: 500 }
+      )
+    }
+  }
+
+  await supabase.from('generated_posts').insert({
+    user_id: user.id,
+    original_idea: idea,
+    generated_text: content,
+    platform,
+    status: 'draft',
+  })
+
+  return NextResponse.json({ content, provider })
 }
