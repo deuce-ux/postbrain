@@ -32,7 +32,7 @@
 
   .btn-primary {
     @apply bg-accent text-white rounded-button px-4 py-2 text-sm font-medium 
-           transition-all duration-200 hover:opacity-90 active:scale-95;
+           transition-all duration-200 hover:bg-[#4338CA] active:scale-95;
   }
 
   .btn-secondary {

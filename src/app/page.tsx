@@ -45,7 +45,7 @@ export default function Home() {
           </p>
           <Link
             href="/auth"
-            className="inline-block bg-[#D4601A] text-white px-6 py-3 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+            className="inline-block bg-[#4F46E5] text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors"
           >
             Start for free
           </Link>
@@ -60,8 +60,8 @@ export default function Home() {
                 key={feature.title}
                 className="bg-white rounded-xl p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]"
               >
-                <div className="w-10 h-10 rounded-lg bg-[#FDF0E8] flex items-center justify-center mb-4">
-                  <Icon className="w-5 h-5 text-[#D4601A]" />
+                <div className="w-10 h-10 rounded-lg bg-[#EEF2FF] flex items-center justify-center mb-4">
+                  <Icon className="w-5 h-5 text-[#4F46E5]" />
                 </div>
                 <h3 className="font-medium text-[#1A1714] mb-2">{feature.title}</h3>
                 <p className="text-sm text-[#6B6560]">{feature.description}</p>
