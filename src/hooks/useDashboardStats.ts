@@ -23,7 +23,7 @@ export function useDashboardStats() {
           postsWritten: Array.isArray(posts) ? posts.length : 0,
           ideasSaved: Array.isArray(ideas) ? ideas.length : 0,
           postsPublished: Array.isArray(posts) 
-            ? posts.filter((p: any) => p.status === 'published').length 
+            ? posts.filter((p: { status: string }) => p.status === 'published').length 
             : 0,
           loading: false
         })

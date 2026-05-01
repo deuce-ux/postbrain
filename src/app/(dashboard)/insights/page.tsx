@@ -66,8 +66,6 @@ export default function InsightsPage() {
     { platform: 'facebook', count: platformCounts.facebook || 0 },
   ].filter(p => p.count > 0).sort((a, b) => b.count - a.count)
 
-  const maxPlatformCount = Math.max(...platformData.map(p => p.count), 1)
-
   const mostUsedPlatform = platformData[0]?.platform || 'N/A'
 
   const oneWeekAgo = new Date()
@@ -106,11 +104,6 @@ export default function InsightsPage() {
       case 'facebook': return 'bg-[#1877F2]'
       default: return 'bg-border'
     }
-  }
-
-  const getPlatformTextColor = (platform: string) => {
-    return platform === 'linkedin' || platform === 'twitter' || 
-           platform === 'facebook' ? 'text-white' : 'text-white'
   }
 
   return (
