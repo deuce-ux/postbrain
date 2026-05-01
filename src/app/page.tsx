@@ -1,80 +1,71 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Lightbulb, Mic, PenTool } from "lucide-react";
+import { Lightbulb, Mic, PenLine } from "lucide-react";
 
 const features = [
   {
     icon: Lightbulb,
     title: "Idea Bank",
-    description: "Capture and organize your best ideas before they disappear. Never lose a great thought again.",
+    description: "Capture raw thoughts before they disappear. Tag, organize, and turn ideas into posts.",
   },
   {
     icon: Mic,
     title: "Voice DNA",
-    description: "Train AI on your existing content to write exactly like you do.",
+    description: "Train the AI on your writing style. Every post sounds like you wrote it — because it did.",
   },
   {
-    icon: PenTool,
+    icon: PenLine,
     title: "Write Modes",
-    description: "Choose from different tones and styles to match your mood and audience.",
+    description: "From idea, hook, or experience — multiple ways to start writing so you never face a blank page.",
   },
 ];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="h-8 w-8 rounded-lg bg-accent text-white flex items-center justify-center font-serif text-lg">
-              PB
-            </span>
-            <span className="font-serif text-xl text-text-primary">PostBrain</span>
+    <div className="min-h-screen bg-[#FAFAF9] font-sans">
+      {/* Navigation bar */}
+      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0]">
+        <div className="mx-auto px-8 py-4 flex items-center justify-between" style={{ maxWidth: '90rem' }}>
+          <Link href="/" className="font-serif text-xl text-[#1A1714]">
+            PostBrain
           </Link>
-          <Link href="/auth">
-            <Button variant="ghost">Sign in</Button>
+          <Link href="/auth" className="text-[#6B6560] hover:text-[#1A1714] transition-colors">
+            Sign in
           </Link>
         </div>
-      </header>
+      </nav>
 
-      <main className="pt-32 pb-16 px-6">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <h1 className="font-serif text-5xl text-text-primary mb-6 animate-fade-in">
+      {/* Hero section */}
+      <main className="pt-24 pb-16 px-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="font-serif text-5xl text-[#1A1714] leading-tight mb-6">
             Write posts that sound exactly like you
           </h1>
-          <p className="text-xl text-text-secondary mb-8 animate-slide-up">
+          <p className="text-lg text-[#6B6560] max-w-xl mx-auto mb-10 text-center">
             AI-powered content creation built for creators who care about their voice
           </p>
-          <Link href="/auth">
-            <Button size="lg" className="animate-slide-up">
-              Start for free
-            </Button>
+          <Link
+            href="/auth"
+            className="inline-block bg-[#D4601A] text-white px-6 py-3 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Start for free
           </Link>
         </div>
 
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-6">
-          {features.map((feature, index) => {
+        {/* Feature cards */}
+        <div className="mx-auto max-w-4xl grid grid-cols-3 gap-6 mt-24 px-8">
+          {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <Card
+              <div
                 key={feature.title}
-                variant="hover"
-                className="animate-slide-up"
-                style={{ animationDelay: `${(index + 1) * 100}ms` }}
+                className="bg-white rounded-xl p-6 border border-[#E8E5E0] shadow-[0_1px_3px_0_rgba(26,23,20,0.06)]"
               >
-                <CardContent className="p-6">
-                  <div className="p-3 rounded-button bg-accent-light w-fit mb-4">
-                    <Icon className="h-5 w-5 text-accent" />
-                  </div>
-                  <h3 className="font-serif text-lg text-text-primary mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-text-secondary">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
+                <div className="w-10 h-10 rounded-lg bg-[#FDF0E8] flex items-center justify-center mb-4">
+                  <Icon className="w-5 h-5 text-[#D4601A]" />
+                </div>
+                <h3 className="font-medium text-[#1A1714] mb-2">{feature.title}</h3>
+                <p className="text-sm text-[#6B6560]">{feature.description}</p>
+              </div>
             );
           })}
         </div>
