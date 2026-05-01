@@ -8,8 +8,6 @@ export async function POST(req: Request) {
 
   const { idea, platform, voice, writingMode } = await req.json()
 
-  const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY!
-
   const platformInstructions: Record<string, string> = {
     twitter: `Write an 8-10 tweet X/Twitter thread.
 - Tweet 1: Strong hook
@@ -61,25 +59,28 @@ Write mode: ${writingMode || 'from idea'}
 Write the complete post now. Return only the post content, no explanation.`
 
   try {
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`
+
+    const response = await fetch(GEMINI_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.85,
-        max_tokens: 2048,
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
+        },
+        contents: [{
+          parts: [{ text: userPrompt }],
+        }],
+        generationConfig: {
+          temperature: 0.85,
+          maxOutputTokens: 2048,
+        },
       }),
     })
 
     const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!content) throw new Error('No content generated')
 
