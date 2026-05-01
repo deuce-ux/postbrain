@@ -1,32 +1,65 @@
-import Link from "next/link";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Lightbulb, FileText, Send } from "lucide-react";
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Lightbulb, FileText, Send, Check } from 'lucide-react'
 
 function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "morning";
-  if (hour < 17) return "afternoon";
-  return "evening";
+  const hour = new Date().getHours()
+  if (hour < 12) return 'morning'
+  if (hour < 17) return 'afternoon'
+  return 'evening'
 }
 
 function formatDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
-const stats = [
-  { label: "Posts Written", value: 12, icon: FileText },
-  { label: "Ideas Saved", value: 48, icon: Lightbulb },
-  { label: "Posts Published", value: 8, icon: Send },
-];
-
 export default function DashboardPage() {
+  const [ideaCount, setIdeaCount] = useState<number | null>(null)
+  const [quickCapture, setQuickCapture] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/ideas')
+      .then(r => r.json())
+      .then(data => Array.isArray(data) && setIdeaCount(data.length))
+      .catch(() => {})
+  }, [saved])
+
+  const handleQuickCapture = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = quickCapture.trim()
+    if (!trimmed) return
+    setSaving(true)
+    try {
+      await fetch('/api/ideas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: trimmed }),
+      })
+      setQuickCapture('')
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const stats = [
+    { label: 'Posts Written', value: 12, icon: FileText },
+    { label: 'Ideas Saved', value: ideaCount ?? '—', icon: Lightbulb },
+    { label: 'Posts Published', value: 8, icon: Send },
+  ]
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="space-y-1">
@@ -36,9 +69,13 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-3 gap-4">
         {stats.map((stat, index) => {
-          const Icon = stat.icon;
+          const Icon = stat.icon
           return (
-            <Card key={stat.label} className="animate-slide-up" style={{ animationDelay: `${index * 50}ms` }}>
+            <Card
+              key={stat.label}
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
               <div className="flex items-center gap-4 p-4">
                 <div className="p-3 rounded-button bg-accent-light">
                   <Icon className="h-5 w-5 text-accent" />
@@ -49,18 +86,33 @@ export default function DashboardPage() {
                 </div>
               </div>
             </Card>
-          );
+          )
         })}
       </div>
 
-      <div className="flex gap-4 items-end">
-        <div className="flex-1 max-w-md">
-          <Input placeholder="Quick capture an idea..." label="Quick Capture" />
+      <form onSubmit={handleQuickCapture} className="flex gap-4 items-end">
+        <div className="flex-1 max-w-md space-y-1.5">
+          <label className="label">Quick Capture</label>
+          <input
+            value={quickCapture}
+            onChange={e => setQuickCapture(e.target.value)}
+            placeholder="Quick capture an idea..."
+            className="input-base"
+          />
         </div>
+        <Button type="submit" loading={saving} disabled={!quickCapture.trim()}>
+          {saved ? (
+            <>
+              <Check className="h-4 w-4" /> Saved
+            </>
+          ) : (
+            '+ Add Idea'
+          )}
+        </Button>
         <Link href="/write">
-          <Button>Start Writing</Button>
+          <Button variant="secondary">Start Writing</Button>
         </Link>
-      </div>
+      </form>
 
       <Card>
         <div className="p-8 text-center">
@@ -77,5 +129,5 @@ export default function DashboardPage() {
         </div>
       </Card>
     </div>
-  );
+  )
 }
