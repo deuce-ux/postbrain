@@ -8,6 +8,21 @@ export async function POST(req: Request) {
 
   const { idea, platform, voice, writingMode } = await req.json()
 
+  // Fetch profile for voice DNA
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('voice_style, voice_examples, voice_dna, display_name, role, project_description, content_topics')
+    .eq('id', user.id)
+    .single()
+
+  const voiceDNA = profile?.voice_dna as {
+    style_summary?: string
+    sentence_patterns?: string
+    tone?: string
+    signature_phrases?: string[]
+    avoid?: string
+  } | null
+
   const platformInstructions: Record<string, string> = {
     twitter: `Write an 8-10 tweet X/Twitter thread.
 - Tweet 1: Strong hook
@@ -41,21 +56,30 @@ export async function POST(req: Request) {
 - Emojis used naturally, not excessively`,
   }
 
-  const systemPrompt = `You are a social media ghostwriter who writes in the user's exact voice.
-Your writing:
-- Sounds like a real person sharing their genuine experience
-- Is ${voice?.style || 'conversational and direct'}
-- Has personality — not corporate, not preachy
-- Tells stories with specific details
-- Stays focused and doesn't meander
+  const systemPrompt = `You are a social media ghostwriter for ${profile?.display_name || 'a creator'}.
 
-AVOID:
-- "I'm excited to share..."
-- Generic advice
-- Buzzwords
-- Sounding like AI
+Their profile:
+- Role: ${profile?.role || 'Creator'}
+- Building: ${profile?.project_description || 'their work'}
+- Topics they write about: ${(profile?.content_topics || []).join(', ') || 'various topics'}
+- Writing style: ${profile?.voice_style || voice?.style || 'conversational'}
 
-${voice?.examples ? `MATCH THIS WRITING STYLE EXACTLY:\n${voice.examples}` : ''}`
+${voiceDNA ? `Their voice analysis:
+- Style: ${voiceDNA.style_summary}
+- Sentence patterns: ${voiceDNA.sentence_patterns}
+- Tone: ${voiceDNA.tone}
+- Signature phrases: ${(voiceDNA.signature_phrases || []).join(', ')}
+- Avoid: ${voiceDNA.avoid}` : ''}
+
+${profile?.voice_examples?.length
+    ? `MATCH THIS WRITING STYLE EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 3).join('\n---\n')}`
+    : voice?.examples
+    ? `MATCH THIS WRITING STYLE EXACTLY:\n${voice.examples}`
+    : ''}
+
+Write in first person as this exact person.
+Sound like a real human, not AI.
+AVOID: "excited to share", buzzwords, generic advice.`
 
   const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
 

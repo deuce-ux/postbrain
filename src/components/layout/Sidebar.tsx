@@ -1,7 +1,8 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   PenLine,
@@ -10,29 +11,43 @@ import {
   CalendarDays,
   BarChart2,
   Settings,
-} from "lucide-react";
-import { clsx } from "clsx";
-import { Avatar } from "../ui/Avatar";
+  Brain,
+} from 'lucide-react'
+import { clsx } from 'clsx'
+import { Avatar } from '../ui/Avatar'
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/write", label: "Write", icon: PenLine },
-  { href: "/ideas", label: "Idea Bank", icon: Lightbulb },
-  { href: "/library", label: "Library", icon: BookOpen },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/insights", label: "Insights", icon: BarChart2 },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/write', label: 'Write', icon: PenLine },
+  { href: '/ideas', label: 'Idea Bank', icon: Lightbulb },
+  { href: '/voice', label: 'Voice DNA', icon: Brain },
+  { href: '/library', label: 'Library', icon: BookOpen },
+  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/insights', label: 'Insights', icon: BarChart2 },
+  { href: '/settings', label: 'Settings', icon: Settings },
+]
 
 interface SidebarProps {
   user?: {
-    name?: string;
-    email?: string;
-  };
+    name?: string
+    email?: string
+  }
 }
 
 export function Sidebar({ user }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
+  const [displayName, setDisplayName] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then(r => r.json())
+      .then(data => {
+        if (data.display_name) setDisplayName(data.display_name)
+      })
+      .catch(() => {})
+  }, [])
+
+  const resolvedName = displayName || user?.name || 'User'
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-60 bg-surface border-r border-border flex flex-col">
@@ -45,45 +60,43 @@ export function Sidebar({ user }: SidebarProps) {
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 py-2">
+      <nav className="flex-1 px-3 py-2 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            const Icon = item.icon;
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            const Icon = item.icon
 
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   className={clsx(
-                    "flex items-center gap-3 px-3 py-2 rounded-button text-sm font-medium transition-all duration-200",
+                    'flex items-center gap-3 px-3 py-2 rounded-button text-sm font-medium transition-all duration-200',
                     isActive
-                      ? "bg-accent-light text-accent"
-                      : "text-text-secondary hover:bg-background hover:text-text-primary"
+                      ? 'bg-accent-light text-accent'
+                      : 'text-text-secondary hover:bg-background hover:text-text-primary'
                   )}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               </li>
-            );
+            )
           })}
         </ul>
       </nav>
 
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-3">
-          <Avatar name={user?.name || "User"} size="sm" />
+          <Avatar name={resolvedName} size="sm" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-text-primary truncate">
-              {user?.name || "User"}
-            </p>
+            <p className="text-sm font-medium text-text-primary truncate">{resolvedName}</p>
             <p className="text-xs text-text-secondary truncate">
-              {user?.email || "user@example.com"}
+              {user?.email || 'user@example.com'}
             </p>
           </div>
         </div>
       </div>
     </aside>
-  );
+  )
 }

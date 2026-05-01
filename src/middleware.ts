@@ -22,8 +22,9 @@ export async function middleware(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth')
-  const isPublicPage = request.nextUrl.pathname === '/'
+  const { pathname } = request.nextUrl
+  const isAuthPage = pathname.startsWith('/auth')
+  const isPublicPage = pathname === '/'
 
   if (!user && !isAuthPage && !isPublicPage) {
     const url = request.nextUrl.clone()
@@ -35,6 +36,25 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  if (user) {
+    const isVoicePage = pathname === '/voice'
+    const isSettingsPage = pathname.startsWith('/settings')
+
+    if (!isVoicePage && !isSettingsPage) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('voice_setup_complete')
+        .eq('id', user.id)
+        .single()
+
+      if (profile && !profile.voice_setup_complete) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/voice'
+        return NextResponse.redirect(url)
+      }
+    }
   }
 
   return supabaseResponse
