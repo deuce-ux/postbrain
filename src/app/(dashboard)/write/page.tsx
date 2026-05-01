@@ -193,11 +193,11 @@ export default function WritePage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-[calc(100vh-64px)] gap-0 -m-8 animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-8 animate-fade-in">
 
       {/* ── Left panel: Controls ── */}
-      <div className="w-[480px] shrink-0 border-r border-border bg-surface overflow-y-auto">
-        <div className="p-6 space-y-6">
+      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface overflow-y-auto">
+        <div className="p-4 md:p-6 space-y-6">
 
           <div>
             <h1 className="page-title">Write</h1>
@@ -231,7 +231,7 @@ export default function WritePage() {
           {/* Step 2: Platform */}
           <section className="space-y-2">
             <label className="label">Platform</label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {PLATFORMS.map(({ id, label, Icon }) => (
                 <button
                   key={id}

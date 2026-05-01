@@ -223,7 +223,7 @@ export default function IdeasPage() {
       </Card>
 
       {/* Filters + Search */}
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex items-center gap-4 flex-wrap overflow-x-auto">
         <div className="flex items-center bg-surface border border-border rounded-button p-0.5 gap-0.5">
           {(['all', 'raw', 'ready', 'used'] as StatusFilter[]).map(f => (
             <button

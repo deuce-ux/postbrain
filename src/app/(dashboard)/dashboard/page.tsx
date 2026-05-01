@@ -67,7 +67,7 @@ export default function DashboardPage() {
         <p className="text-text-secondary">{formatDate()}</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
@@ -90,8 +90,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <form onSubmit={handleQuickCapture} className="flex gap-4 items-end">
-        <div className="flex-1 max-w-md space-y-1.5">
+      <form onSubmit={handleQuickCapture} className="flex flex-col md:flex-row gap-4 items-end">
+        <div className="flex-1 w-full md:max-w-md space-y-1.5">
           <label className="label">Quick Capture</label>
           <input
             value={quickCapture}
