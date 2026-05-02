@@ -19,11 +19,11 @@ interface Profile {
   id: string
   display_name?: string
   role?: string
-  building?: string
-  topics?: string[]
+  project_description?: string
+  content_topics?: string[]
   voice_style?: string
-  voice_examples_count?: number
-  voice_summary?: string
+  voice_examples?: string[]
+  voice_dna?: { style_summary?: string } | null
   email?: string
 }
 
@@ -46,19 +46,20 @@ export default function SettingsPage() {
     id: '',
     display_name: '',
     role: '',
-    building: '',
-    topics: [],
+    project_description: '',
+    content_topics: [],
     voice_style: '',
-    voice_examples_count: 0,
-    voice_summary: '',
+    voice_examples: [],
+    voice_dna: null,
     email: '',
   })
-  
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   const [profileForm, setProfileForm] = useState({
     display_name: '',
     role: '',
-    building: '',
-    topics: [] as string[],
+    project_description: '',
+    content_topics: [] as string[],
   })
 
   // ── Show toast ─────────────────────────────────────────────────────
@@ -71,25 +72,28 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const res = await fetch('/api/profile')
-        if (res.ok) {
-          const data = await res.json()
+        const [profileRes, { data: { user } }] = await Promise.all([
+          fetch('/api/profile'),
+          supabase.auth.getUser(),
+        ])
+        if (profileRes.ok) {
+          const data = await profileRes.json()
           setProfile({
             id: data.id || '',
             display_name: data.display_name || '',
             role: data.role || '',
-            building: data.building || '',
-            topics: data.topics || [],
+            project_description: data.project_description || '',
+            content_topics: data.content_topics || [],
             voice_style: data.voice_style || '',
-            voice_examples_count: data.voice_examples_count || 0,
-            voice_summary: data.voice_summary || '',
-            email: data.email || '',
+            voice_examples: data.voice_examples || [],
+            voice_dna: data.voice_dna || null,
+            email: user?.email || '',
           })
           setProfileForm({
             display_name: data.display_name || '',
             role: data.role || '',
-            building: data.building || '',
-            topics: data.topics || [],
+            project_description: data.project_description || '',
+            content_topics: data.content_topics || [],
           })
         }
       } catch (e) {
@@ -97,26 +101,29 @@ export default function SettingsPage() {
       }
     }
     fetchProfile()
-  }, [])
+  }, [supabase])
 
   // ── Save profile ────────────────────────────────────────────────────
   const handleSaveProfile = async () => {
     setSaving(true)
+    setSaveError(null)
     try {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileForm),
       })
+      const data = await res.json()
       if (res.ok) {
         showToast('Settings saved')
-        const data = await res.json()
         setProfile(prev => ({ ...prev, ...data }))
       } else {
-        showToast('Failed to save')
+        console.error('Profile save failed:', data)
+        setSaveError(data.error || 'Failed to save. Please try again.')
       }
-    } catch {
-      showToast('Failed to save')
+    } catch (e) {
+      console.error('Profile save error:', e)
+      setSaveError('Failed to save. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -126,9 +133,9 @@ export default function SettingsPage() {
   const toggleTopic = (topic: string) => {
     setProfileForm(prev => ({
       ...prev,
-      topics: prev.topics.includes(topic)
-        ? prev.topics.filter(t => t !== topic)
-        : [...prev.topics, topic],
+      content_topics: prev.content_topics.includes(topic)
+        ? prev.content_topics.filter(t => t !== topic)
+        : [...prev.content_topics, topic],
     }))
   }
 
@@ -202,8 +209,8 @@ export default function SettingsPage() {
               
               <Input
                 label="What you're building"
-                value={profileForm.building}
-                onChange={e => setProfileForm(prev => ({ ...prev, building: e.target.value }))}
+                value={profileForm.project_description}
+                onChange={e => setProfileForm(prev => ({ ...prev, project_description: e.target.value }))}
                 placeholder="e.g. AI-powered content tool"
               />
               
@@ -216,7 +223,7 @@ export default function SettingsPage() {
                       onClick={() => toggleTopic(topic)}
                       className={clsx(
                         'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
-                        profileForm.topics.includes(topic)
+                        profileForm.content_topics.includes(topic)
                           ? 'bg-[#4F46E5] text-white border-[#4F46E5]'
                           : 'bg-white text-text-secondary border-border hover:border-[#4F46E5]/40'
                       )}
@@ -230,6 +237,9 @@ export default function SettingsPage() {
               <Button onClick={handleSaveProfile} loading={saving} className="mt-2">
                 Save
               </Button>
+              {saveError && (
+                <p className="text-sm text-destructive mt-2">{saveError}</p>
+              )}
             </div>
           )}
 
@@ -243,13 +253,13 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3 p-4 bg-[#EEF2FF] rounded-lg">
                     <Badge variant="accent">{profile.voice_style}</Badge>
                     <span className="text-sm text-text-secondary">
-                      {profile.voice_examples_count} posts saved
+                      {profile.voice_examples?.length || 0} posts saved
                     </span>
                   </div>
-                  
-                  {profile.voice_summary && (
+
+                  {profile.voice_dna?.style_summary && (
                     <div className="p-4 bg-background rounded-lg">
-                      <p className="text-sm text-text-secondary">{profile.voice_summary}</p>
+                      <p className="text-sm text-text-secondary">{profile.voice_dna.style_summary}</p>
                     </div>
                   )}
                   
