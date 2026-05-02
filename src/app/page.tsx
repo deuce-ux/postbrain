@@ -21,9 +21,9 @@ const features = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#FAFAF9] font-sans">
+    <div className="min-h-screen bg-[#FAFAF9] font-sans pt-6">
       {/* Navigation bar */}
-      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0] z-50 py-4">
+      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-[#E8E5E0] z-50 pt-8 md:pt-6">
         <div className="mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between" style={{ maxWidth: '90rem' }}>
           <Link href="/" className="font-serif text-lg md:text-xl text-[#1A1714]">
             PostBrain
