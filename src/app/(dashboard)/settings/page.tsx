@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { FacebookImport } from '@/components/FacebookImport'
 import { createClient } from '@/lib/supabase/client'
 import { clsx } from 'clsx'
 
@@ -145,6 +146,12 @@ export default function SettingsPage() {
     router.push('/')
   }
 
+  // ── Facebook import success ────────────────────────────────────
+  const handleFacebookSuccess = useCallback((analysis: { style_summary?: string }, _postsCount: number) => {
+    showToast('Voice DNA updated from Facebook data')
+    setProfile(prev => ({ ...prev, voice_setup_complete: true, voice_dna: analysis } as typeof prev))
+  }, [showToast])
+
   // ── Components ──────────────────────────────────────────────────
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -263,14 +270,20 @@ export default function SettingsPage() {
                     </div>
                   )}
                   
+                  <FacebookImport onSuccess={handleFacebookSuccess} />
                   <Button variant="secondary" onClick={() => router.push('/voice')}>
                     Redo Voice Setup
                   </Button>
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-text-secondary mb-4">Voice DNA not set up yet</p>
-                  <Button onClick={() => router.push('/voice')}>
+                <div className="space-y-4">
+                  <FacebookImport onSuccess={handleFacebookSuccess} />
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-text-secondary">or set up manually</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                  <Button onClick={() => router.push('/voice')} className="w-full">
                     Set Up Voice DNA
                   </Button>
                 </div>

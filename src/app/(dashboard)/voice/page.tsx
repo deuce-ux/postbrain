@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { FacebookImport } from '@/components/FacebookImport'
 import { clsx } from 'clsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -17,6 +18,9 @@ interface VoiceAnalysis {
   signature_phrases: string[]
   topics: string[]
   avoid: string
+  opening_style?: string
+  closing_style?: string
+  unique_traits?: string[]
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -72,6 +76,9 @@ export default function VoicePage() {
   const [analyzing, setAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useState<VoiceAnalysis | null>(null)
   const [analyzeError, setAnalyzeError] = useState('')
+
+  // Facebook import state
+  const [facebookDone, setFacebookDone] = useState(false)
 
   // Save state
   const [saving, setSaving] = useState(false)
@@ -161,6 +168,15 @@ export default function VoicePage() {
       setSaving(false)
     }
   }, [displayName, role, projectDescription, selectedTopics, voiceStyle, examples, analysis, router])
+
+  // ── Facebook import success ───────────────────────────────────────────────
+
+  const handleFacebookSuccess = useCallback((fbAnalysis: VoiceAnalysis) => {
+    setAnalysis(fbAnalysis)
+    setFacebookDone(true)
+    setToast('Voice DNA updated from Facebook. Redirecting…')
+    setTimeout(() => router.push('/dashboard'), 2000)
+  }, [router])
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -308,6 +324,19 @@ export default function VoicePage() {
               Paste 3–5 of your best posts. The more you give, the better I match your voice.
             </p>
           </div>
+
+          {/* Option A: Facebook import */}
+          {!facebookDone && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">Option A — Import automatically</p>
+              <FacebookImport onSuccess={handleFacebookSuccess} />
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-text-secondary">or add manually below</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             {examples.map((ex, i) => (
