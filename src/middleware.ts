@@ -21,8 +21,14 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
+
+  // Never redirect API routes
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
   const isAuthPage = pathname.startsWith('/auth')
   const isPublicPage = pathname === '/'
 
@@ -39,10 +45,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    const isVoicePage = pathname === '/voice'
-    const isSettingsPage = pathname.startsWith('/settings')
+    const exemptPaths = ['/voice', '/settings', '/api', '/auth']
+    const isExempt = exemptPaths.some(p => pathname.startsWith(p))
 
-    if (!isVoicePage && !isSettingsPage) {
+    if (!isExempt) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('voice_setup_complete')
