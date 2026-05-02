@@ -147,7 +147,7 @@ export default function SettingsPage() {
   }
 
   // ── Facebook import success ────────────────────────────────────
-  const handleFacebookSuccess = useCallback((analysis: { style_summary?: string }, _postsCount: number) => {
+  const handleFacebookSuccess = useCallback((analysis: { style_summary?: string }) => {
     showToast('Voice DNA updated from Facebook data')
     setProfile(prev => ({ ...prev, voice_setup_complete: true, voice_dna: analysis } as typeof prev))
   }, [showToast])
