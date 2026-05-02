@@ -109,6 +109,7 @@ export default function SettingsPage() {
     setSaving(true)
     setSaveError(null)
     try {
+      console.log('Saving profile:', profileForm)
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
