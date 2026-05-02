@@ -7,22 +7,21 @@ export default function Home() {
       {/* Navigation */}
       <nav className="sticky top-0 left-0 right-0 z-50 bg-white border-b border-[#E8E5E0]">
         <div className="flex items-center justify-between px-6 md:px-10 py-5" style={{ maxWidth: '90rem' }}>
-          <Link href="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="w-8 h-8 rounded-lg bg-[#4F46E5] text-white flex items-center justify-center font-bold text-sm">
               PB
             </span>
             <span className="font-serif text-xl text-[#1A1714]">PostBrain</span>
-          </Link>
+          </div>
           <div className="flex items-center gap-3">
             <Link href="/auth" className="text-sm text-[#6B6560] hover:text-[#1A1714] transition-colors">
               Sign in
             </Link>
-            <Link
-              href="/auth"
+            <button
               className="hidden sm:inline-flex bg-[#4F46E5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#4338CA] transition-colors"
             >
               Get started
-            </Link>
+            </button>
           </div>
         </div>
       </nav>
@@ -56,12 +55,12 @@ export default function Home() {
           >
             Start for free →
           </Link>
-          <Link
-            href="/auth"
+          <a
+            href="#how-it-works"
             className="w-full sm:w-auto bg-white text-[#1A1714] border border-[#E8E5E0] px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#FAFAF9] transition-colors"
           >
             See how it works
-          </Link>
+          </a>
         </div>
 
         <p className="text-xs text-[#6B6560] mt-4">Free to start · No credit card required</p>
@@ -113,7 +112,7 @@ export default function Home() {
       </section>
 
       {/* How it Works Section */}
-      <section className="bg-white border-t border-[#E8E5E0] px-6 md:px-10 py-16">
+      <section id="how-it-works" className="bg-white border-t border-[#E8E5E0] px-6 md:px-10 py-16">
         <div className="max-w-3xl mx-auto">
           <p className="text-xs font-medium text-[#4F46E5] tracking-widest text-center mb-3">HOW IT WORKS</p>
           <h2 className="font-serif text-2xl md:text-3xl text-[#1A1714] text-center mb-3">From idea to published in minutes</h2>
