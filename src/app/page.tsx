@@ -29,7 +29,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <main 
-        className="px-6 md:px-10 py-16 md:py-20 text-center"
+        className="px-6 md:px-10 pt-16 pb-10 md:pt-20 md:pb-10 text-center"
         style={{ background: 'linear-gradient(180deg, #EEF2FF 0%, #FAFAF9 60%)' }}
       >
         {/* Tag pill */}
@@ -68,7 +68,7 @@ export default function Home() {
       </main>
 
       {/* Features Section */}
-      <section className="bg-[#FAFAF9] px-6 md:px-10 py-16">
+      <section className="bg-[#FAFAF9] px-6 md:px-10 py-10">
         <div className="max-w-4xl mx-auto">
           <p className="text-xs font-medium text-[#4F46E5] tracking-widest text-center mb-3">FEATURES</p>
           <h2 className="font-serif text-2xl md:text-3xl text-[#1A1714] text-center mb-3">Everything you need to write better</h2>
