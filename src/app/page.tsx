@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Lightbulb, Mic, PenLine, ArrowRight } from "lucide-react";
+import { Lightbulb, Mic, PenLine } from "lucide-react";
 
 export default function Home() {
   return (
