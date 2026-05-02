@@ -3,9 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
 
 export default function AuthPage() {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -21,7 +24,13 @@ export default function AuthPage() {
     const { error } =
       tab === 'signin'
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password })
+        : await supabase.auth.signUp({ 
+            email, 
+            password,
+            options: {
+              data: { full_name: name }
+            }
+          })
 
     setLoading(false)
 
@@ -34,62 +43,117 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6 md:mb-8 bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-          PostBrain
-        </h1>
+    <main className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl border border-[#E8E5E0] p-8 w-full max-w-md shadow-[0_4px_24px_0_rgba(26,23,20,0.08)]">
+        
+        {/* Header */}
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 bg-[#4F46E5] rounded-xl flex items-center justify-center text-white font-bold text-sm mb-4">
+            PB
+          </div>
+          <h1 className="font-serif text-2xl text-[#1A1714] text-center mb-1">
+            {tab === 'signin' ? 'Welcome back' : 'Create your account'}
+          </h1>
+          <p className="text-sm text-[#6B6560] text-center mb-6">
+            {tab === 'signin' ? 'Sign in to your PostBrain account' : 'Start writing in your voice today'}
+          </p>
+        </div>
 
-        <div className="bg-gray-900 rounded-2xl p-5 md:p-8 border border-gray-800">
-          <div className="flex mb-5 md:mb-6 bg-gray-800 rounded-lg p-1">
-            {(['signin', 'signup'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 md:py-2 rounded-md text-sm font-medium transition-colors ${
-                  tab === t ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {t === 'signin' ? 'Sign In' : 'Sign Up'}
-              </button>
-            ))}
+        {/* Tabs */}
+        <div className="flex border-b border-[#E8E5E0] mb-6">
+          <button
+            type="button"
+            onClick={() => { setTab('signin'); setError(''); }}
+            className={`flex-1 text-center pb-3 text-sm cursor-pointer ${
+              tab === 'signin' 
+                ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-medium' 
+                : 'text-[#6B6560]'
+            }`}
+          >
+            Sign in
+          </button>
+          <button
+            type="button"
+            onClick={() => { setTab('signup'); setError(''); }}
+            className={`flex-1 text-center pb-3 text-sm cursor-pointer ${
+              tab === 'signup' 
+                ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-medium' 
+                : 'text-[#6B6560]'
+            }`}
+          >
+            Sign up
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {tab === 'signup' && (
+            <div>
+              <label className="block text-sm font-medium text-[#1A1714] mb-1.5">Your name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full bg-white border border-[#E8E5E0] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-shadow"
+                placeholder="John Doe"
+              />
+            </div>
+          )}
+          
+          <div>
+            <label className="block text-sm font-medium text-[#1A1714] mb-1.5">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full bg-white border border-[#E8E5E0] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-shadow"
+              placeholder="you@example.com"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#1A1714] mb-1.5">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full bg-white border border-[#E8E5E0] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-shadow"
+              placeholder="••••••••"
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-violet-500"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {error && <p className="text-red-400 text-sm">{error}</p>}
-
+          <div className="pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 bg-[#4F46E5] text-white rounded-xl py-3 text-sm font-medium hover:bg-[#4338CA] transition-colors disabled:opacity-70"
             >
-              {loading ? 'Please wait…' : tab === 'signin' ? 'Sign In' : 'Create Account'}
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {loading 
+                ? (tab === 'signin' ? 'Signing in...' : 'Creating account...') 
+                : (tab === 'signin' ? 'Sign in' : 'Create account')
+              }
             </button>
-          </form>
+          </div>
+
+          {/* Error handling */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 text-sm mt-4 text-center">
+              {error}
+            </div>
+          )}
+        </form>
+
+        {/* Bottom link */}
+        <div className="text-center mt-6">
+          <Link href="/" className="text-xs text-[#6B6560] hover:text-[#1A1714] transition-colors">
+            Back to home
+          </Link>
         </div>
+
       </div>
     </main>
   )
