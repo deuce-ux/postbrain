@@ -76,10 +76,10 @@ export function Sidebar({ user }: SidebarProps) {
                   href={item.href}
                   prefetch={true}
                   className={clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-2',
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'border-l-[#4F46E5] bg-[#EEF2FF] text-[#4F46E5]'
-                      : 'border-l-2 border-transparent text-[#6B6560] hover:bg-[#FAFAF9] hover:text-[#1A1714]'
+                      ? 'bg-[#EEF2FF] text-[#4F46E5]'
+                      : 'text-[#6B6560] hover:bg-[#FAFAF9] hover:text-[#1A1714]'
                   )}
                 >
                   <Icon className="h-4 w-4" />
