@@ -22,6 +22,12 @@ interface Post {
   platform: Platform
   status: Status
   created_at: string
+  performance_views?: number
+  performance_likes?: number
+  performance_comments?: number
+  performance_shares?: number
+  performance_notes?: string
+  performance_logged_at?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -110,6 +116,15 @@ export default function LibraryPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [loggingPerformanceId, setLoggingPerformanceId] = useState<string | null>(null)
+  const [performanceForm, setPerformanceForm] = useState({
+    views: '',
+    likes: '',
+    comments: '',
+    shares: '',
+    notes: ''
+  })
+  const [savingPerformance, setSavingPerformance] = useState(false)
 
   // ── Fetch posts ─────────────────────────────────────────────────────────
   const fetchPosts = useCallback(async () => {
@@ -187,6 +202,44 @@ export default function LibraryPage() {
         next.add(postId)
       }
       return next
+    })
+  }
+
+  const handleLogPerformance = async (postId: string) => {
+    setSavingPerformance(true)
+    try {
+      const res = await fetch(`/api/posts/${postId}/performance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          views: parseInt(performanceForm.views) || 0,
+          likes: parseInt(performanceForm.likes) || 0,
+          comments: parseInt(performanceForm.comments) || 0,
+          shares: parseInt(performanceForm.shares) || 0,
+          notes: performanceForm.notes
+        })
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setPosts(p => p.map(post => post.id === postId ? { ...post, ...updated } : post))
+        setLoggingPerformanceId(null)
+        setPerformanceForm({ views: '', likes: '', comments: '', shares: '', notes: '' })
+      }
+    } catch (e) {
+      console.error('Failed to save performance:', e)
+    } finally {
+      setSavingPerformance(false)
+    }
+  }
+
+  const openPerformanceForm = (post: Post) => {
+    setLoggingPerformanceId(post.id)
+    setPerformanceForm({
+      views: post.performance_views?.toString() || '',
+      likes: post.performance_likes?.toString() || '',
+      comments: post.performance_comments?.toString() || '',
+      shares: post.performance_shares?.toString() || '',
+      notes: post.performance_notes || ''
     })
   }
 
@@ -333,6 +386,96 @@ export default function LibraryPage() {
                     <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </div>
+
+                {/* Performance summary or log button */}
+                {post.performance_logged_at ? (
+                  <div className="mt-3 pt-3 border-t border-[#E8E5E0]">
+                    <div className="flex items-center gap-3 text-xs text-[#6B6560]">
+                      <span>👁 {post.performance_views || 0}</span>
+                      <span>❤️ {post.performance_likes || 0}</span>
+                      <span>💬 {post.performance_comments || 0}</span>
+                      <span>🔁 {post.performance_shares || 0}</span>
+                      <button onClick={() => openPerformanceForm(post)} className="text-[#4F46E5] hover:underline ml-auto">
+                        Edit
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 pt-3 border-t border-[#E8E5E0]">
+                    <button
+                      onClick={() => openPerformanceForm(post)}
+                      className="text-xs text-[#4F46E5] hover:underline"
+                    >
+                      Log performance
+                    </button>
+                  </div>
+                )}
+
+                {/* Performance logging form */}
+                {loggingPerformanceId === post.id && (
+                  <div className="mt-3 pt-3 border-t border-[#E8E5E0] space-y-3">
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <label className="text-xs text-[#6B6560]">Views</label>
+                        <input
+                          type="number"
+                          value={performanceForm.views}
+                          onChange={e => setPerformanceForm(f => ({ ...f, views: e.target.value }))}
+                          placeholder="0"
+                          className="w-full px-2 py-1 text-sm border border-[#E8E5E0] rounded focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[#6B6560]">Likes</label>
+                        <input
+                          type="number"
+                          value={performanceForm.likes}
+                          onChange={e => setPerformanceForm(f => ({ ...f, likes: e.target.value }))}
+                          placeholder="0"
+                          className="w-full px-2 py-1 text-sm border border-[#E8E5E0] rounded focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[#6B6560]">Comments</label>
+                        <input
+                          type="number"
+                          value={performanceForm.comments}
+                          onChange={e => setPerformanceForm(f => ({ ...f, comments: e.target.value }))}
+                          placeholder="0"
+                          className="w-full px-2 py-1 text-sm border border-[#E8E5E0] rounded focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[#6B6560]">Shares</label>
+                        <input
+                          type="number"
+                          value={performanceForm.shares}
+                          onChange={e => setPerformanceForm(f => ({ ...f, shares: e.target.value }))}
+                          placeholder="0"
+                          className="w-full px-2 py-1 text-sm border border-[#E8E5E0] rounded focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-[#6B6560]">Notes</label>
+                      <textarea
+                        value={performanceForm.notes}
+                        onChange={e => setPerformanceForm(f => ({ ...f, notes: e.target.value }))}
+                        placeholder="Any observations about this post..."
+                        rows={2}
+                        className="w-full px-2 py-1 text-sm border border-[#E8E5E0] rounded focus:outline-none focus:ring-1 focus:ring-[#4F46E5] resize-none"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => handleLogPerformance(post.id)} loading={savingPerformance}>
+                        Save performance
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => setLoggingPerformanceId(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )
           })}
