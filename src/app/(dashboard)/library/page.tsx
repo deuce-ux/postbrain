@@ -249,7 +249,7 @@ export default function LibraryPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in px-6 md:px-10">
       {/* Header */}
       <div>
         <h1 className="page-title">Library</h1>

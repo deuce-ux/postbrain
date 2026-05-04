@@ -308,7 +308,7 @@ export default function CalendarPage() {
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in px-6 md:px-10">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="page-title">Content Calendar</h1>

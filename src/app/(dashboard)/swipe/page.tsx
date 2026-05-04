@@ -291,7 +291,7 @@ export default function SwipePage() {
   }, [posts])
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in px-6 md:px-10">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="page-title">Swipe File</h1>

@@ -18,7 +18,7 @@ export function AppShell({ children, user }: AppShellProps) {
       <aside className="hidden md:flex w-60 flex-shrink-0 fixed left-0 top-0 h-screen">
         <Sidebar user={user} />
       </aside>
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 md:pl-60 page-enter">
+      <main className="flex-1 overflow-y-auto p-6 md:p-10 lg:p-12 pb-24 md:ml-60 page-enter">
         {children}
       </main>
       <BottomNav />
