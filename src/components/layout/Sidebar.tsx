@@ -54,7 +54,7 @@ export function Sidebar({ user }: SidebarProps) {
   const resolvedName = displayName || user?.name || 'User'
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-[#E8E5E0] flex flex-col">
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-white border-r border-[#E8E5E0] flex flex-col z-50">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="w-8 h-8 rounded-lg bg-[#4F46E5] text-white flex items-center justify-center font-bold text-sm">
