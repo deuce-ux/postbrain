@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Lightbulb, FileText, Send, Check } from 'lucide-react'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 import { DailyBrief } from '@/components/DailyBrief'
+import { StreakWidget } from '@/components/StreakWidget'
 import { clsx } from 'clsx'
 
 function getGreeting(): string {
@@ -163,6 +164,8 @@ export default function DashboardPage() {
       )}
 
       <DailyBrief />
+
+      <StreakWidget />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat, index) => {

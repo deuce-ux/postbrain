@@ -13,6 +13,7 @@ import {
   Settings,
   Brain,
   Bookmark,
+  List,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Avatar } from '../ui/Avatar'
@@ -20,6 +21,7 @@ import { Avatar } from '../ui/Avatar'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/write', label: 'Write', icon: PenLine },
+  { href: '/thread', label: 'Thread', icon: List },
   { href: '/ideas', label: 'Idea Bank', icon: Lightbulb },
   { href: '/voice', label: 'Voice DNA', icon: Brain },
   { href: '/library', label: 'Library', icon: BookOpen },

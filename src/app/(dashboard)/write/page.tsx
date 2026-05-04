@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
   Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
-  Bookmark, Zap, Shuffle,
+  Bookmark, Zap, Shuffle, List,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -129,6 +130,7 @@ export default function WritePage() {
   const [repurposedContent, setRepurposedContent] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const router = useRouter()
 
   // ── On mount: read localStorage ──────────────────────────────────────────
 
@@ -535,6 +537,18 @@ export default function WritePage() {
                   <BookMarked className="h-3.5 w-3.5" />
                   {savedToLibrary ? 'Saved' : 'Save to Library'}
                 </Button>
+                {platform === 'twitter' && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      localStorage.setItem('thread_content', generated)
+                      router.push('/thread')
+                    }}
+                  >
+                    <List className="h-3.5 w-3.5" /> Thread Builder
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
