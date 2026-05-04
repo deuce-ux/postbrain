@@ -29,7 +29,7 @@ export function NavigationProgress() {
 
   return (
     <div 
-      className="fixed top-0 left-0 z-[100] h-0.5 bg-[#4F46E5] transition-all duration-300"
+      className="fixed top-0 left-0 z-[100] h-0.5 bg-[#4F46E5] transition-all duration-300 pointer-events-none"
       style={{ width: `${width}%` }}
     />
   )
