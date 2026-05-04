@@ -128,6 +128,10 @@ export function DailyBrief() {
     )
   }
 
+  if (todaysPosts.length === 0 && readyIdeas.length === 0 && streak === 0) {
+    return null
+  }
+
   return (
     <div className="bg-white border border-[#E8E5E0] rounded-2xl p-5 mb-6">
       <div className="flex items-center justify-between mb-3">
