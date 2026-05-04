@@ -165,7 +165,7 @@ export default function IdeasPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in px-6 md:px-10">
+    <div className="space-y-6 animate-fade-in px-4 py-4 md:px-10 md:py-8">
       {/* Header */}
       <div>
         <h1 className="page-title">Idea Bank</h1>

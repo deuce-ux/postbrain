@@ -113,7 +113,7 @@ export default function ThreadPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-6 md:-m-10 lg:-m-12 animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-8 lg:-m-10 animate-fade-in px-4 py-4 md:px-10 md:py-8">
       {/* Left Panel - Editor */}
       <div className="w-full md:w-1/2 p-4 overflow-y-auto">
         <div className="bg-white border border-[#E8E5E0] rounded-xl p-4 mb-4">

@@ -242,7 +242,7 @@ export default function WritePage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-6 md:-m-10 lg:-m-12 animate-fade-in">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-8 lg:-m-10 animate-fade-in px-4 py-4 md:px-10 md:py-8">
 
       {/* ── Left panel: Controls ── */}
       <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto">

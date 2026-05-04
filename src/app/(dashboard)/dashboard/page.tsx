@@ -134,7 +134,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-8 animate-fade-in px-6 md:px-10">
+    <div className="space-y-8 animate-fade-in px-4 py-4 md:px-10 md:py-8">
       <div className="space-y-1">
         <h1 className="page-title text-2xl md:text-3xl">
           Good {getGreeting()}, {displayName}

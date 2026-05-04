@@ -204,7 +204,7 @@ export default function VoicePage() {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl mx-auto py-4 animate-fade-in px-6 md:px-10">
+    <div className="max-w-2xl mx-auto py-0 animate-fade-in px-4 py-4 md:px-10 md:py-8">
 
       {/* Header */}
       <div className="mb-8 space-y-3">
