@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   Copy, Check, RefreshCw, Trash2, BookOpen,
-  Search,
+  Search, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -117,6 +117,10 @@ export default function LibraryPage() {
   const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [loggingPerformanceId, setLoggingPerformanceId] = useState<string | null>(null)
+  const [repurposePostId, setRepurposePostId] = useState<string | null>(null)
+  const [repurposeTo, setRepurposeTo] = useState<Platform | null>(null)
+  const [repurposing, setRepurposing] = useState(false)
+  const [repurposedContent, setRepurposedContent] = useState<string | null>(null)
   const [performanceForm, setPerformanceForm] = useState({
     views: '',
     likes: '',
@@ -380,6 +384,13 @@ export default function LibraryPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setRepurposePostId(post.id)}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" /> Repurpose
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleDelete(post.id)}
                     disabled={deletingId === post.id}
                   >
@@ -474,6 +485,86 @@ export default function LibraryPage() {
                         Cancel
                       </Button>
                     </div>
+                  </div>
+                )}
+
+                {/* Repurpose panel */}
+                {repurposePostId === post.id && (
+                  <div className="mt-3 pt-3 border-t border-[#E8E5E0] bg-[#F8F9FF] p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-medium text-[#6B6560]">Repurpose to:</span>
+                      <button onClick={() => { setRepurposePostId(null); setRepurposedContent(null); setRepurposeTo(null) }}>
+                        <X className="h-4 w-4 text-[#6B6560]" />
+                      </button>
+                    </div>
+                    <div className="flex gap-2 flex-wrap mb-3">
+                      {PLATFORM_FILTERS.filter(p => p !== 'all' && p !== post.platform).map(p => (
+                        <button
+                          key={p}
+                          onClick={async () => {
+                            setRepurposeTo(p as Platform)
+                            setRepurposing(true)
+                            try {
+                              const res = await fetch('/api/repurpose', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  content: post.generated_text,
+                                  fromPlatform: post.platform,
+                                  toPlatform: p,
+                                }),
+                              })
+                              const data = await res.json()
+                              if (data.content) setRepurposedContent(data.content)
+                            } catch (e) { console.error(e) }
+                            setRepurposing(false)
+                          }}
+                          disabled={repurposing}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-[#E8E5E0] text-[#6B6560] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors"
+                        >
+                          {p.charAt(0).toUpperCase() + p.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                    {repurposing && <p className="text-sm text-[#6B6560] mb-2">Repurposing...</p>}
+                    {repurposedContent && (
+                      <>
+                        <div className="bg-white border border-[#E8E5E0] rounded-lg p-3 mb-3">
+                          <p className="text-sm text-[#1A1714] whitespace-pre-wrap line-clamp-6">{repurposedContent}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={async () => {
+                              await navigator.clipboard.writeText(repurposedContent)
+                            }}
+                          >
+                            <Copy className="h-3.5 w-3.5" /> Copy
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              await fetch('/api/posts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  idea: post.original_idea,
+                                  generated_text: repurposedContent,
+                                  platform: repurposeTo,
+                                }),
+                              })
+                              setRepurposePostId(null)
+                              setRepurposedContent(null)
+                              setRepurposeTo(null)
+                              fetchPosts()
+                            }}
+                          >
+                            Save to Library
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -125,7 +125,6 @@ export default function WritePage() {
 
   // Repurpose
   const [showRepurpose, setShowRepurpose] = useState(false)
-  const [repurposeTo, setRepurposeTo] = useState<Platform | null>(null)
   const [repurposing, setRepurposing] = useState(false)
   const [repurposedContent, setRepurposedContent] = useState<string | null>(null)
 
@@ -536,7 +535,156 @@ export default function WritePage() {
                   <BookMarked className="h-3.5 w-3.5" />
                   {savedToLibrary ? 'Saved' : 'Save to Library'}
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    if (showVariations) { setShowVariations(false); return }
+                    setGeneratingVariations(true)
+                    try {
+                      const res = await fetch('/api/generate-variations', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: generated, platform }),
+                      })
+                      const data = await res.json()
+                      if (data.bold || data.personal || data.concise) {
+                        setVariations(data)
+                      }
+                    } catch (e) { console.error(e) }
+                    setGeneratingVariations(false)
+                    setShowVariations(true)
+                  }}
+                >
+                  <Shuffle className="h-3.5 w-3.5" /> {showVariations ? 'Hide' : 'Variations'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRepurpose(!showRepurpose)}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Repurpose
+                </Button>
               </div>
+
+              {/* Tone Variations Panel */}
+              {showVariations && (
+                <div className="bg-[#F8F9FF] rounded-xl p-4 border border-[#E8E5E0] mt-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    {(['bold', 'personal', 'concise'] as const).map(v => (
+                      <button
+                        key={v}
+                        onClick={() => setActiveVariation(v)}
+                        className={clsx(
+                          'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                          activeVariation === v
+                            ? 'bg-[#4F46E5] text-white'
+                            : 'text-[#6B6560] hover:bg-[#EEF2FF]'
+                        )}
+                      >
+                        {v.charAt(0).toUpperCase() + v.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="bg-white border border-[#E8E5E0] rounded-lg p-4 mb-3">
+                    <p className="text-sm text-[#1A1714] whitespace-pre-wrap">
+                      {generatingVariations ? 'Generating variations...' : variations?.[activeVariation] || 'No variation available'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={async () => {
+                        const text = variations?.[activeVariation]
+                        if (text) {
+                          await navigator.clipboard.writeText(text)
+                          showToast('Copied to clipboard')
+                        }
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copy
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const text = variations?.[activeVariation]
+                        if (text) {
+                          setGenerated(text)
+                          setShowVariations(false)
+                        }
+                      }}
+                    >
+                      Use this version
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Repurpose Panel */}
+              {showRepurpose && (
+                <div className="bg-[#F8F9FF] rounded-xl p-4 border border-[#E8E5E0] mt-4">
+                  <div className="text-xs font-medium text-[#6B6560] mb-3">Convert to:</div>
+                  <div className="flex gap-2 flex-wrap mb-3">
+                    {PLATFORMS.filter(p => p.id !== platform).map(p => (
+                      <button
+                        key={p.id}
+                        onClick={async () => {
+                          setRepurposing(true)
+                          try {
+                            const res = await fetch('/api/repurpose', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                content: generated,
+                                fromPlatform: platform,
+                                toPlatform: p.id,
+                              }),
+                            })
+                            const data = await res.json()
+                            if (data.content) setRepurposedContent(data.content)
+                          } catch (e) { console.error(e) }
+                          setRepurposing(false)
+                        }}
+                        disabled={repurposing}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-[#E8E5E0] text-[#6B6560] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  {repurposing && <p className="text-sm text-[#6B6560]">Repurposing...</p>}
+                  {repurposedContent && (
+                    <div className="bg-white border border-[#E8E5E0] rounded-lg p-4 mb-3">
+                      <p className="text-sm text-[#1A1714] whitespace-pre-wrap">{repurposedContent}</p>
+                    </div>
+                  )}
+                  {repurposedContent && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(repurposedContent)
+                          showToast('Copied to clipboard')
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" /> Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setGenerated(repurposedContent)
+                          setShowRepurpose(false)
+                          setRepurposedContent(null)
+                        }}
+                      >
+                        Use this version
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

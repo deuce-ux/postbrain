@@ -64,7 +64,7 @@ Return only the repurposed post, no explanation.`
     const repurposed = data.choices?.[0]?.message?.content
 
     return NextResponse.json({ content: repurposed })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to repurpose' }, { status: 500 })
   }
 }

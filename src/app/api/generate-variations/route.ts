@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { content, platform, idea } = await req.json()
+    const { content, platform } = await req.json()
 
     const GROQ_API_KEY = process.env.GROQ_API_KEY!
 
@@ -62,7 +62,7 @@ Return ONLY a JSON object:
     const variations = JSON.parse(clean)
 
     return NextResponse.json(variations)
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to generate variations' }, { status: 500 })
   }
 }
