@@ -41,6 +41,11 @@ interface SidebarProps {
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const [displayName, setDisplayName] = useState<string | null>(null)
+  const [isNavigatingTo, setIsNavigatingTo] = useState<string | null>(null)
+
+  useEffect(() => {
+    setIsNavigatingTo(null)
+  }, [pathname])
 
   useEffect(() => {
     fetch('/api/profile')
@@ -67,13 +72,15 @@ export function Sidebar({ user }: SidebarProps) {
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            const isActive = isNavigatingTo === item.href || (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href)))
             const Icon = item.icon
 
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  prefetch={true}
+                  onClick={() => setIsNavigatingTo(item.href)}
                   className={clsx(
                     'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border-l-2',
                     isActive

@@ -3,6 +3,7 @@ import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { PWARegister } from "@/components/PWARegister";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { NavigationProgress } from "@/components/NavigationProgress";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <NavigationProgress />
         {children}
         <PWARegister />
         <PWAInstallBanner />
