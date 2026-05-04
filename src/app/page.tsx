@@ -57,7 +57,7 @@ export default function Home() {
           </Link>
           <a
             href="#how-it-works"
-            className="w-full sm:w-auto bg-white text-[#1A1714] border border-[#E8E5E0] px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#FAFAF9] transition-colors"
+            className="w-full sm:w-auto bg-white text-[#1A1714] px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#FAFAF9] transition-colors"
           >
             See how it works
           </a>

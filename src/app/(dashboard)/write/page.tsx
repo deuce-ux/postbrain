@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
   Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
-  Bookmark,
+  Bookmark, Zap, Shuffle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -111,6 +111,23 @@ export default function WritePage() {
   } | null>(null)
   const [swipeSearch, setSwipeSearch] = useState('')
   const [swipePlatformFilter, setSwipePlatformFilter] = useState('All')
+
+  // Hook generator
+  const [showHooks, setShowHooks] = useState(false)
+  const [hooks, setHooks] = useState<string[]>([])
+  const [generatingHooks, setGeneratingHooks] = useState(false)
+
+  // Tone variations
+  const [showVariations, setShowVariations] = useState(false)
+  const [variations, setVariations] = useState<{ bold?: string; personal?: string; concise?: string } | null>(null)
+  const [generatingVariations, setGeneratingVariations] = useState(false)
+  const [activeVariation, setActiveVariation] = useState<'bold' | 'personal' | 'concise'>('bold')
+
+  // Repurpose
+  const [showRepurpose, setShowRepurpose] = useState(false)
+  const [repurposeTo, setRepurposeTo] = useState<Platform | null>(null)
+  const [repurposing, setRepurposing] = useState(false)
+  const [repurposedContent, setRepurposedContent] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -257,6 +274,62 @@ export default function WritePage() {
               className="input-base resize-none overflow-hidden"
               style={{ minHeight: '80px', maxHeight: '200px' }}
             />
+            {idea.trim() && !showHooks && (
+              <button
+                onClick={async () => {
+                  setGeneratingHooks(true)
+                  try {
+                    const res = await fetch('/api/generate-hooks', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ idea, platform }),
+                    })
+                    const data = await res.json()
+                    if (data.hooks) setHooks(data.hooks)
+                  } catch (e) { console.error(e) }
+                  setGeneratingHooks(false)
+                  setShowHooks(true)
+                }}
+                disabled={generatingHooks}
+                className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 mt-2"
+              >
+                <Zap className="h-3 w-3" />
+                {generatingHooks ? 'Generating hooks...' : 'Generate hooks'}
+              </button>
+            )}
+
+            {/* Hooks panel */}
+            {showHooks && (
+              <div className="bg-[#F8F9FF] rounded-xl p-4 mt-2 border border-[#E8E5E0]">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-medium text-[#6B6560]">Pick a hook</span>
+                  <button
+                    onClick={() => setShowHooks(false)}
+                    className="text-xs text-[#4F46E5]"
+                  >
+                    Close
+                  </button>
+                </div>
+                {generatingHooks ? (
+                  <p className="text-sm text-[#6B6560]">Generating hooks...</p>
+                ) : (
+                  <div className="space-y-2">
+                    {hooks.map((hook, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setIdea(hook)
+                          setShowHooks(false)
+                        }}
+                        className="bg-white rounded-lg px-3 py-2.5 text-sm text-[#1A1714] border border-[#E8E5E0] cursor-pointer w-full text-left hover:border-[#4F46E5] hover:bg-[#EEF2FF] transition-colors"
+                      >
+                        {hook}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Step 2: Platform */}
@@ -327,7 +400,7 @@ export default function WritePage() {
             ) : (
               <button
                 onClick={() => setSwipeDrawerOpen(true)}
-                className="bg-white border border-[#E8E5E0] rounded-lg px-4 py-2.5 text-sm text-[#6B6560] w-full flex items-center gap-2 hover:border-[#4F46E5] transition-colors"
+                className="bg-white rounded-lg px-4 py-2.5 text-sm text-[#6B6560] w-full flex items-center gap-2 hover:bg-[#F5F3F0] transition-colors"
               >
                 <Bookmark className="h-4 w-4" />
                 Browse Swipe File
