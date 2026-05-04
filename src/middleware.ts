@@ -44,24 +44,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user) {
-    const exemptPaths = ['/voice', '/settings', '/api', '/auth']
-    const isExempt = exemptPaths.some(p => pathname.startsWith(p))
-
-    if (!isExempt) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('voice_setup_complete')
-        .eq('id', user.id)
-        .single()
-
-      if (profile && !profile.voice_setup_complete) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/voice'
-        return NextResponse.redirect(url)
-      }
-    }
-  }
 
   return supabaseResponse
 }

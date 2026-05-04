@@ -73,6 +73,7 @@ export default function DashboardPage() {
   const [quickCapture, setQuickCapture] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [voiceSetupComplete, setVoiceSetupComplete] = useState<boolean>(true)
 
   useEffect(() => {
     async function fetchData() {
@@ -88,6 +89,9 @@ export default function DashboardPage() {
 
         if (profile?.display_name) {
           setDisplayName(profile.display_name)
+        }
+        if (profile && typeof profile.voice_setup_complete === 'boolean') {
+          setVoiceSetupComplete(profile.voice_setup_complete)
         }
         if (Array.isArray(posts)) {
           setRecentPosts(posts.slice(0, 3))
@@ -135,6 +139,27 @@ export default function DashboardPage() {
         </h1>
         <p className="text-text-secondary">{formatDate()}</p>
       </div>
+
+      {!voiceSetupComplete && (
+        <div className="bg-[#EEF2FF] border border-[#C7D2FE] rounded-xl p-4 mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#4F46E5] rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-xs">✦</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#1A1714]">
+                Set up Voice DNA
+              </p>
+              <p className="text-xs text-[#6B6560]">
+                Get posts that sound exactly like you
+              </p>
+            </div>
+          </div>
+          <a href="/voice" className="bg-[#4F46E5] text-white text-xs px-4 py-2 rounded-lg font-medium whitespace-nowrap">
+            Set up now
+          </a>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat, index) => {
