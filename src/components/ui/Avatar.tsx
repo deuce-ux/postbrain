@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { HTMLAttributes } from "react";
 import { clsx } from "clsx";
 
@@ -28,14 +29,20 @@ function Avatar({ src, alt, name, size = "md", className, ...props }: AvatarProp
   return (
     <div
       className={clsx(
-        "flex items-center justify-center rounded-full bg-accent-light text-accent font-medium",
+        "flex items-center justify-center rounded-full bg-accent-light text-accent font-medium overflow-hidden relative",
         sizeStyles[size],
         className
       )}
       {...props}
     >
       {src ? (
-        <img src={src} alt={alt || name} className="h-full w-full rounded-full object-cover" />
+        <Image 
+          src={src} 
+          alt={alt || name || "Avatar"} 
+          fill
+          className="object-cover"
+          unoptimized
+        />
       ) : (
         <span>{name ? getInitials(name) : "?"}</span>
       )}

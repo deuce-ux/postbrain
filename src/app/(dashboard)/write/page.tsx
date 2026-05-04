@@ -208,7 +208,7 @@ export default function WritePage() {
     } finally {
       setGenerating(false)
     }
-  }, [idea, platform, voice, writeMode, generating])
+  }, [idea, platform, voice, writeMode, generating, swipeInspiration])
 
   // ── Copy ─────────────────────────────────────────────────────────────────
 

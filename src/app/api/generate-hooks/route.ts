@@ -27,25 +27,7 @@ export async function POST(req: Request) {
 
     const { idea, platform } = await req.json()
 
-    const cookieStore2 = cookies()
-    const supabase2 = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() { return cookieStore2.getAll() },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore2.set(name, value, options)
-              )
-            } catch {}
-          },
-        },
-      }
-    )
-
-    const { data: profile } = await supabase2
+    const { data: profile } = await supabase
       .from('profiles')
       .select('voice_dna, voice_style, display_name')
       .eq('id', user.id)
