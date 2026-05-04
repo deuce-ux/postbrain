@@ -1,58 +1,65 @@
-export function parseFacebookPosts(jsonData: Record<string, unknown> | unknown[]): string[] {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export function parseFacebookPosts(jsonData: any): string[] {
   const posts: string[] = []
 
-  try {
-    const data = jsonData as Record<string, unknown>
-
-    // Format 1: { posts: [{ data: [{ post: "text" }] }] }
-    if (data.posts && Array.isArray(data.posts)) {
-      for (const post of data.posts as Record<string, unknown>[]) {
-        if (post.data && Array.isArray(post.data)) {
-          for (const item of post.data as Record<string, unknown>[]) {
-            if (typeof item.post === 'string' && item.post.length > 20) {
-              posts.push(item.post)
-            }
-          }
-        }
-        if (typeof post.title === 'string' && post.title.length > 20) {
-          posts.push(post.title)
-        }
-      }
+  function decodeText(str: string): string {
+    try {
+      return decodeURIComponent(escape(str))
+    } catch {
+      return str
     }
-
-    // Format 2: direct array of post objects
-    if (Array.isArray(jsonData)) {
-      for (const post of jsonData as Record<string, unknown>[]) {
-        if (post.data && Array.isArray(post.data)) {
-          for (const item of post.data as Record<string, unknown>[]) {
-            if (typeof item.post === 'string' && item.post.length > 20) {
-              posts.push(item.post)
-            }
-          }
-        }
-      }
-    }
-
-    // Format 3: { timeline_posts: [...] }
-    if (data.timeline_posts && Array.isArray(data.timeline_posts)) {
-      for (const post of data.timeline_posts as Record<string, unknown>[]) {
-        if (post.data && Array.isArray(post.data)) {
-          for (const item of post.data as Record<string, unknown>[]) {
-            if (typeof item.post === 'string') {
-              posts.push(item.post)
-            }
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Parse error:', error)
   }
 
-  const seen = new Set<string>()
-  const unique = posts.filter(p => seen.has(p) ? false : (seen.add(p), true))
+  function crawl(obj: any, depth: number = 0): void {
+    if (depth > 10 || !obj) return
+
+    if (typeof obj === 'string') {
+      const decoded = decodeText(obj)
+      if (decoded.length > 30 &&
+          !decoded.startsWith('http') &&
+          !decoded.startsWith('www.') &&
+          decoded.split(' ').length > 4) {
+        posts.push(decoded)
+      }
+      return
+    }
+
+    if (Array.isArray(obj)) {
+      obj.forEach(item => crawl(item, depth + 1))
+      return
+    }
+
+    if (typeof obj === 'object') {
+      // Priority fields first
+      const priorityFields = ['post', 'message', 'text', 'content', 'description']
+      for (const field of priorityFields) {
+        if (obj[field] && typeof obj[field] === 'string' && obj[field].length > 30) {
+          posts.push(decodeText(obj[field]))
+        }
+      }
+
+      // Then recurse into all other fields
+      for (const key of Object.keys(obj)) {
+        if (!priorityFields.includes(key)) {
+          crawl(obj[key], depth + 1)
+        }
+      }
+    }
+  }
+
+  crawl(jsonData)
+
+  // Deduplicate and filter
+  const unique = Array.from(new Set(posts))
   return unique
     .filter(p => p.length > 30)
+    .filter(p => p.split(' ').length > 4)
     .filter(p => !p.startsWith('http'))
+    .filter(p => !p.startsWith('www'))
+    .filter(p => !p.includes('shared a memory'))
+    .filter(p => !p.includes('was tagged'))
+    .filter(p => !p.includes('added a new photo'))
+    .filter(p => !p.includes('updated his cover'))
+    .filter(p => !p.includes('updated her cover'))
     .slice(0, 50)
 }
