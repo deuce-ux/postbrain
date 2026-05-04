@@ -106,7 +106,7 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in px-4 py-4 md:px-10 md:py-8">
+    <div className="space-y-8 animate-fade-in md:px-4 md:py-2">
       <div>
         <h1 className="page-title text-2xl md:text-3xl">Insights</h1>
         <p className="text-text-secondary mt-1">Your content performance at a glance</p>
