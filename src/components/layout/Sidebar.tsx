@@ -12,6 +12,7 @@ import {
   BarChart2,
   Settings,
   Brain,
+  Bookmark,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Avatar } from '../ui/Avatar'
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/ideas', label: 'Idea Bank', icon: Lightbulb },
   { href: '/voice', label: 'Voice DNA', icon: Brain },
   { href: '/library', label: 'Library', icon: BookOpen },
+  { href: '/swipe', label: 'Swipe File', icon: Bookmark },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/insights', label: 'Insights', icon: BarChart2 },
   { href: '/settings', label: 'Settings', icon: Settings },
