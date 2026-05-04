@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -83,6 +83,29 @@ export default function VoicePage() {
   // Save state
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [isUpdate, setIsUpdate] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then(r => r.json())
+      .then(profile => {
+        if (profile.display_name) setDisplayName(profile.display_name)
+        if (profile.role) setRole(profile.role)
+        if (profile.project_description) setProjectDescription(profile.project_description)
+        if (profile.content_topics && Array.isArray(profile.content_topics)) {
+          setSelectedTopics(profile.content_topics)
+        }
+        if (profile.voice_style) setVoiceStyle(profile.voice_style as VoiceStyle)
+        if (profile.voice_examples && Array.isArray(profile.voice_examples)) {
+          const ex = [...profile.voice_examples]
+          while (ex.length < 3) ex.push('')
+          setExamples(ex)
+        }
+        if (profile.voice_dna) setAnalysis(profile.voice_dna)
+        if (profile.voice_setup_complete) setIsUpdate(true)
+      })
+      .catch(() => {})
+  }, [])
 
   // ── Topic helpers ─────────────────────────────────────────────────────────
 
@@ -185,6 +208,14 @@ export default function VoicePage() {
 
       {/* Header */}
       <div className="mb-8 space-y-3">
+        {isUpdate && (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-3 mb-4 flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+              <Check className="h-4 w-4 text-white" />
+            </div>
+            <p className="text-sm font-medium text-emerald-800">Voice DNA is set up</p>
+          </div>
+        )}
         <StepDots current={step} total={3} />
         <h1 className="page-title">Voice DNA</h1>
         <p className="text-text-secondary">Help PostBrain write exactly like you</p>
@@ -420,7 +451,7 @@ export default function VoicePage() {
               <ChevronLeft className="h-4 w-4" /> Back
             </Button>
             <Button onClick={handleSave} loading={saving} className="flex-1">
-              {saving ? 'Saving…' : 'Save Voice DNA'}
+              {saving ? (isUpdate ? 'Updating…' : 'Saving…') : (isUpdate ? 'Update Voice DNA' : 'Save Voice DNA')}
             </Button>
           </div>
         </div>
