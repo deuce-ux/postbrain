@@ -26,13 +26,17 @@ export function FacebookImport({ onSuccess }: FacebookImportProps) {
   const [postsFound, setPostsFound] = useState(0)
   const [showInstructions, setShowInstructions] = useState(true)
   const [dragOver, setDragOver] = useState(false)
+  const [analyzingMessage, setAnalyzingMessage] = useState('Analyzing...')
 
   const handleFile = useCallback(async (file: File) => {
     setError(null)
     setStep('analyzing')
+    setAnalyzingMessage('Reading file...')
 
     try {
       const text = await file.text()
+      setAnalyzingMessage('Extracting posts...')
+
       const json = JSON.parse(text)
       const posts = parseFacebookPosts(json)
 
@@ -43,6 +47,7 @@ export function FacebookImport({ onSuccess }: FacebookImportProps) {
       }
 
       setPostsFound(posts.length)
+      setAnalyzingMessage(`Analyzing ${posts.length} posts...`)
 
       const response = await fetch('/api/import-facebook', {
         method: 'POST',
@@ -152,7 +157,7 @@ export function FacebookImport({ onSuccess }: FacebookImportProps) {
       {step === 'analyzing' && (
         <div className="text-center py-8">
           <div className="w-10 h-10 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm font-medium text-[#1A1714] mb-1">Analyzing your writing style...</p>
+          <p className="text-sm font-medium text-[#1A1714] mb-1">{analyzingMessage}</p>
           <p className="text-xs text-[#6B6560]">Reading through your posts to understand your voice</p>
         </div>
       )}
