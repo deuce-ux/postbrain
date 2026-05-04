@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, voice, writingMode } = await req.json()
+  const { idea, platform, voice, writingMode, swipeInspiration } = await req.json()
 
   // Fetch profile for voice DNA
   const { data: profile } = await supabase
@@ -98,7 +98,22 @@ Write in first person as this exact person.
 Sound like a real human, not AI.
 AVOID: "excited to share", buzzwords, generic advice.`
 
-  const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
+  const structureInstructions = swipeInspiration ? `
+IMPORTANT — Use this proven viral structure:
+Hook type: ${swipeInspiration.hook_type}
+Structure pattern: ${swipeInspiration.structure_notes || 'Follow the hook type pattern'}
+Emotional trigger to use: ${swipeInspiration.emotional_trigger || 'curiosity'}
+
+Reference post (USE THE STRUCTURE, NOT THE CONTENT):
+"${(swipeInspiration.content || '').slice(0, 300)}..."
+
+Apply this exact structural pattern to the user's idea.
+Make it sound like the user, not the reference post.
+` : ''
+
+const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
+
+${structureInstructions}
 
 The idea/topic to write about:
 "${idea}"

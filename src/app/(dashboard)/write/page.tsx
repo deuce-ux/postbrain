@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
   Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
+  Bookmark,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
@@ -92,6 +93,25 @@ export default function WritePage() {
   const [savedToLibrary, setSavedToLibrary] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
+  // Swipe file
+  const [swipeDrawerOpen, setSwipeDrawerOpen] = useState(false)
+  const [swipePosts, setSwipePosts] = useState<{
+    id: string
+    content: string
+    platform: string
+    hook_type: string | null
+    structure_notes: string | null
+    emotional_trigger: string | null
+  }[]>([])
+  const [swipeInspiration, setSwipeInspiration] = useState<{
+    hook_type: string
+    structure_notes: string
+    content: string
+    emotional_trigger: string
+  } | null>(null)
+  const [swipeSearch, setSwipeSearch] = useState('')
+  const [swipePlatformFilter, setSwipePlatformFilter] = useState('All')
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // ── On mount: read localStorage ──────────────────────────────────────────
@@ -116,6 +136,14 @@ export default function WritePage() {
         })
         .catch(() => {})
     }
+
+    // Fetch swipe file posts
+    fetch('/api/swipe')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setSwipePosts(data)
+      })
+      .catch(() => {})
   }, [])
 
   // ── Persist voice settings ────────────────────────────────────────────────
@@ -153,7 +181,7 @@ export default function WritePage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea, platform, voice, writingMode: writeMode }),
+        body: JSON.stringify({ idea, platform, voice, writingMode: writeMode, swipeInspiration: swipeInspiration || null }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
@@ -278,6 +306,33 @@ export default function WritePage() {
                 </button>
               ))}
             </div>
+          </section>
+
+          {/* INSPIRATION section */}
+          <section className="space-y-2">
+            <label className="label">Inspiration</label>
+            
+            {swipeInspiration ? (
+              <div className="bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg px-3 py-2 flex items-center justify-between">
+                <span className="text-xs text-[#4F46E5]">
+                  ✦ Using: {swipeInspiration.hook_type} structure
+                </span>
+                <button
+                  onClick={() => setSwipeInspiration(null)}
+                  className="text-[#4F46E5] hover:text-[#4338CA]"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setSwipeDrawerOpen(true)}
+                className="bg-white border border-[#E8E5E0] rounded-lg px-4 py-2.5 text-sm text-[#6B6560] w-full flex items-center gap-2 hover:border-[#4F46E5] transition-colors"
+              >
+                <Bookmark className="h-4 w-4" />
+                Browse Swipe File
+              </button>
+            )}
           </section>
 
           {/* Step 4: Voice Settings (collapsible) */}
@@ -420,6 +475,148 @@ export default function WritePage() {
           </div>
         )}
       </div>
+
+      {/* Swipe File Drawer */}
+      {swipeDrawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={() => setSwipeDrawerOpen(false)}
+          />
+          
+          {/* Drawer */}
+          <div className="fixed md:right-0 md:top-0 md:bottom-0 md:w-96 bg-white border-l border-[#E8E5E0] p-6 overflow-y-auto z-50
+            bottom-0 left-0 right-0 rounded-t-2xl border-t border-[#E8E5E0] md:rounded-none max-h-[70vh] md:max-h-none">
+            {/* Mobile drag handle */}
+            <div className="md:hidden flex justify-center mb-4">
+              <div className="w-8 h-1 bg-[#E8E5E0] rounded-full" />
+            </div>
+            
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="font-medium text-[#1A1714]">Choose a structure</h2>
+                <p className="text-xs text-[#6B6560] mt-1">Pick a post to use its structure as inspiration</p>
+              </div>
+              <button 
+                onClick={() => setSwipeDrawerOpen(false)}
+                className="p-1 hover:bg-[#F5F3F0] rounded-lg"
+              >
+                <X className="h-5 w-5 text-[#5C5A55]" />
+              </button>
+            </div>
+
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="Search by content or hook type..."
+              value={swipeSearch}
+              onChange={e => setSwipeSearch(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-[#E8E5E0] rounded-lg mb-3 focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
+            />
+
+            {/* Platform filter */}
+            <div className="flex gap-1 mb-4 overflow-x-auto">
+              {(['All', 'Twitter', 'LinkedIn', 'Instagram', 'Facebook'] as const).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setSwipePlatformFilter(p)}
+                  className={clsx(
+                    'px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap transition-colors',
+                    swipePlatformFilter === p
+                      ? 'bg-[#4F46E5] text-white'
+                      : 'bg-white border border-[#E8E5E0] text-[#6B6560]'
+                  )}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Swipe posts list */}
+            {swipePosts.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-sm text-[#6B6560] mb-2">Your swipe file is empty.</p>
+                <a href="/swipe" className="text-sm text-[#4F46E5] hover:underline">Add posts at Swipe File →</a>
+              </div>
+            ) : (
+              <div>
+                {swipePosts
+                  .filter(post => {
+                    const matchesPlatform = swipePlatformFilter === 'All' || post.platform === swipePlatformFilter
+                    const matchesSearch = !swipeSearch || 
+                      post.content.toLowerCase().includes(swipeSearch.toLowerCase()) ||
+                      (post.hook_type && post.hook_type.toLowerCase().includes(swipeSearch.toLowerCase()))
+                    return matchesPlatform && matchesSearch
+                  })
+                  .map(post => (
+                    <div
+                      key={post.id}
+                      onClick={() => setSwipeInspiration({
+                        hook_type: post.hook_type || 'Question',
+                        structure_notes: post.structure_notes || '',
+                        content: post.content,
+                        emotional_trigger: post.emotional_trigger || 'curiosity',
+                      })}
+                      className={clsx(
+                        'bg-white border border-[#E8E5E0] rounded-xl p-4 mb-3 cursor-pointer transition-all',
+                        swipeInspiration?.content === post.content 
+                          ? 'border-2 border-[#4F46E5] bg-[#EEF2FF]'
+                          : 'hover:border-[#4F46E5] hover:bg-[#F8F9FF]'
+                      )}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={clsx(
+                          'px-2 py-0.5 rounded text-xs font-medium',
+                          post.platform === 'Twitter' ? 'bg-gray-900 text-white' :
+                          post.platform === 'LinkedIn' ? 'bg-[#0077B5] text-white' :
+                          post.platform === 'Instagram' ? 'bg-pink-500 text-white' :
+                          'bg-[#1877F2] text-white'
+                        )}>
+                          {post.platform}
+                        </span>
+                        {post.hook_type && (
+                          <span className={clsx(
+                            'px-2 py-0.5 rounded text-xs font-medium',
+                            post.hook_type === 'Question' ? 'bg-blue-50 text-blue-700' :
+                            post.hook_type === 'Bold statement' ? 'bg-red-50 text-red-700' :
+                            post.hook_type === 'Story' ? 'bg-purple-50 text-purple-700' :
+                            post.hook_type === 'Statistic' ? 'bg-green-50 text-green-700' :
+                            post.hook_type === 'Controversial' ? 'bg-orange-50 text-orange-700' :
+                            post.hook_type === 'How-to' ? 'bg-teal-50 text-teal-700' :
+                            post.hook_type === 'List' ? 'bg-indigo-50 text-indigo-700' :
+                            'bg-pink-50 text-pink-700'
+                          )}>
+                            {post.hook_type}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-[#1A1714] line-clamp-3 mb-2">{post.content}</p>
+                      {post.structure_notes && (
+                        <p className="text-xs text-[#6B6560] truncate">
+                          Why it works: {post.structure_notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* Use this structure button */}
+            {swipeInspiration && (
+              <button
+                onClick={() => {
+                  setSwipeDrawerOpen(false)
+                }}
+                className="bg-[#4F46E5] text-white text-sm px-4 py-2 rounded-lg w-full mt-3"
+              >
+                Use this structure
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }
