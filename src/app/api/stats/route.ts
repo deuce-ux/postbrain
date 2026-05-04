@@ -69,6 +69,8 @@ export async function GET() {
       thisWeekPosts,
       weeklyGoal: profile?.weekly_goal || 5,
       totalPosts: posts?.length || 0
+    }, {
+      headers: { 'Cache-Control': 'private, max-age=60' },
     })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

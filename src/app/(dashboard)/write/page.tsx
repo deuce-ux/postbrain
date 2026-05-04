@@ -224,19 +224,11 @@ export default function WritePage() {
 
   // ── Save to library ───────────────────────────────────────────────────────
 
-  const handleSaveToLibrary = async () => {
+  const handleSaveToLibrary = () => {
     if (!generated || savedToLibrary) return
-    try {
-      await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea, platform, voice, writingMode: writeMode }),
-      })
-      setSavedToLibrary(true)
-      showToast('Saved to library')
-    } catch {
-      showToast('Failed to save')
-    }
+    // Generate already auto-saves to DB; this just confirms it to the user
+    setSavedToLibrary(true)
+    showToast('Saved to library')
   }
 
   // ─────────────────────────────────────────────────────────────────────────

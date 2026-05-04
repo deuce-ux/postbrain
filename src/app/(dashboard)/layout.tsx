@@ -21,10 +21,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       },
     }
   )
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
 
   return (
-    <AppShell user={{ name: user?.user_metadata?.name, email: user?.email }}>
+    <AppShell user={{ name: session?.user?.user_metadata?.name, email: session?.user?.email }}>
       {children}
     </AppShell>
   )

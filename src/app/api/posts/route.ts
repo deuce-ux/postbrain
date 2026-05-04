@@ -38,9 +38,35 @@ export async function GET() {
       console.error('GET posts error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'private, max-age=30' },
+    })
   } catch (err) {
     console.error('GET posts catch:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const supabase = makeClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { idea, generated_text, platform } = await req.json()
+    const { data, error } = await supabase
+      .from('generated_posts')
+      .insert({ user_id: user.id, original_idea: idea, generated_text, platform, status: 'draft' })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('POST post error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json(data)
+  } catch (err) {
+    console.error('POST post catch:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

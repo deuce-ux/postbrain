@@ -545,7 +545,7 @@ export default function LibraryPage() {
                           <Button
                             size="sm"
                             onClick={async () => {
-                              await fetch('/api/posts', {
+                              const res = await fetch('/api/posts', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -557,7 +557,10 @@ export default function LibraryPage() {
                               setRepurposePostId(null)
                               setRepurposedContent(null)
                               setRepurposeTo(null)
-                              fetchPosts()
+                              if (res.ok) {
+                                const newPost = await res.json()
+                                setPosts(p => [newPost, ...p])
+                              }
                             }}
                           >
                             Save to Library

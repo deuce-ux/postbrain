@@ -38,7 +38,9 @@ export async function GET() {
       console.error('GET ideas error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+      headers: { 'Cache-Control': 'private, max-age=30' },
+    })
   } catch (err) {
     console.error('GET ideas catch:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
