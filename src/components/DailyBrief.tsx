@@ -76,9 +76,14 @@ export function DailyBrief() {
   const [calendarEntries, setCalendarEntries] = useState<CalendarEntry[]>([])
   const [readyIdeas, setReadyIdeas] = useState<Idea[]>([])
   const [posts, setPosts] = useState<Post[]>([])
+  const [mounted, setMounted] = useState(false)
+  const [todayStr, setTodayStr] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setMounted(true)
+    setTodayStr(new Date().toISOString().split('T')[0])
+    
     async function fetchData() {
       try {
         const [calRes, ideasRes, postsRes] = await Promise.all([
@@ -103,8 +108,8 @@ export function DailyBrief() {
     fetchData()
   }, [])
 
-  const todayStr = new Date().toISOString().split('T')[0]
   const todaysPosts = useMemo(() => {
+    if (!todayStr) return []
     return calendarEntries.filter(entry => entry.scheduled_date.split('T')[0] === todayStr)
   }, [calendarEntries, todayStr])
 
@@ -115,9 +120,9 @@ export function DailyBrief() {
     router.push('/write')
   }
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
-      <div className="bg-white border border-[#E8E5E0] rounded-2xl p-5 mb-6 animate-pulse">
+      <div className="bg-white border border-[#E8E5E0] rounded-2xl p-5 mb-6 animate-pulse hidden md:block">
         <div className="h-5 w-32 bg-[#F5F3F0] rounded mb-3" />
         <div className="h-px bg-[#E8E5E0] my-3" />
         <div className="space-y-2">
