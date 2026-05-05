@@ -40,33 +40,7 @@ Return ONLY a JSON object:
   "concise": "50% shorter, every word earns its place, tight and sharp"
 }`
 
-    const generateWithOpenRouter = async (systemPrompt: string, userPrompt: string): Promise<string> => {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
-          'HTTP-Referer': 'https://postbrain-eight.vercel.app',
-          'X-Title': 'PostBrain'
-        },
-        body: JSON.stringify({
-          model: 'qwen/qwen3-next-80b-a3b-instruct:free',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.85,
-          max_tokens: 2048,
-        })
-      })
-      if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`)
-      const data = await response.json()
-      const text = data.choices?.[0]?.message?.content
-      if (!text) throw new Error('No content from OpenRouter')
-      return text
-    }
-
-    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+    const generateWithGroq = async (_: string, userPrompt: string): Promise<string> => {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -75,10 +49,7 @@ Return ONLY a JSON object:
         },
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
+          messages: [{ role: 'user', content: userPrompt }],
           temperature: 0.85,
           max_tokens: 2048,
         })
@@ -90,14 +61,33 @@ Return ONLY a JSON object:
       return text
     }
 
+    const generateWithGemini = async (_: string, userPrompt: string): Promise<string> => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userPrompt }] }],
+            generationConfig: { temperature: 0.85, maxOutputTokens: 2048 },
+          }),
+        }
+      )
+      if (!response.ok) throw new Error(`Gemini error: ${response.status}`)
+      const data = await response.json()
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (!text) throw new Error('No content from Gemini')
+      return text
+    }
+
     let rawContent: string
 
     try {
-      rawContent = await generateWithOpenRouter('', prompt)
-    } catch (openRouterError) {
-      console.warn('OpenRouter failed, falling back to Groq:', openRouterError)
+      rawContent = await generateWithGroq('', prompt)
+    } catch (groqError) {
+      console.warn('Groq failed, falling back to Gemini:', groqError)
       try {
-        rawContent = await generateWithGroq('', prompt)
+        rawContent = await generateWithGemini('', prompt)
       } catch {
         console.error('Both providers failed')
         return NextResponse.json({ error: 'Failed to generate variations' }, { status: 500 })

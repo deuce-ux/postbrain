@@ -157,32 +157,6 @@ The input to write about:
 
 Write the complete post now. Return only the post content, no explanation.`
 
-  async function generateWithOpenRouter(systemPrompt: string, userPrompt: string): Promise<string> {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
-        'HTTP-Referer': 'https://postbrain-eight.vercel.app',
-        'X-Title': 'PostBrain'
-      },
-      body: JSON.stringify({
-        model: 'qwen/qwen3-next-80b-a3b-instruct:free',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.85,
-        max_tokens: 2048,
-      })
-    })
-    if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`)
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-    if (!content) throw new Error('No content from OpenRouter')
-    return content
-  }
-
   async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -207,16 +181,36 @@ Write the complete post now. Return only the post content, no explanation.`
     return content
   }
 
+  async function generateWithGemini(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text: userPrompt }] }],
+          generationConfig: { temperature: 0.85, maxOutputTokens: 2048 },
+        }),
+      }
+    )
+    if (!response.ok) throw new Error(`Gemini error: ${response.status}`)
+    const data = await response.json()
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!content) throw new Error('No content from Gemini')
+    return content
+  }
+
   let content: string
-  let provider = 'openrouter'
+  let provider = 'groq'
 
   try {
-    content = await generateWithOpenRouter(systemPrompt, userPrompt)
-  } catch (openRouterError) {
-    console.warn('OpenRouter failed, falling back to Groq:', openRouterError)
-    provider = 'groq'
+    content = await generateWithGroq(systemPrompt, userPrompt)
+  } catch (groqError) {
+    console.warn('Groq failed, falling back to Gemini:', groqError)
+    provider = 'gemini'
     try {
-      content = await generateWithGroq(systemPrompt, userPrompt)
+      content = await generateWithGemini(systemPrompt, userPrompt)
     } catch {
       console.error('Both providers failed')
       return NextResponse.json(
