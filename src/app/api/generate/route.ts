@@ -129,7 +129,10 @@ ${voiceContext}
 
 ABSOLUTE RULES:
 - Zero hashtags
-- Zero invented names — only use names from user's story
+- NEVER invent names. Zero fictional characters.
+- If the user's story has no names, write without any names.
+- "a friend", "someone I know", "a colleague" — fine
+- "Emeka", "Nneoma", "Chinedu" — NEVER unless user wrote them
 - Never: "I've been thinking", "I want to share", brethren,
   synergy, leverage, game-changer, touch base, circle back,
   "at the end of the day", "it is what it is"
@@ -176,8 +179,17 @@ FORMATTING:
 - White space is emphasis
 - Write how a real person thinks, not how an academic writes
 
-CRITICAL — Return ONLY this exact JSON format, nothing else:
-{"variation1": "full post text", "variation2": "full post text"}`
+OUTPUT FORMAT — THIS IS CRITICAL:
+Return a JSON object with exactly two keys.
+Start your entire response with { 
+End your entire response with }
+No text before {. No text after }.
+No markdown. No code fences. No backticks.
+Escape all newlines as \\n inside the JSON strings.
+Escape all quotes inside strings with \\"
+
+Example of correct format:
+{"variation1": "First line.\\n\\nSecond paragraph.\\n\\nThird paragraph.", "variation2": "Different opening.\\n\\nDifferent middle.\\n\\nDifferent end."}`
 
   async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -223,15 +235,47 @@ CRITICAL — Return ONLY this exact JSON format, nothing else:
     return content
   }
 
-  const cleanContent = (text: string) => {
+  function parseVariations(raw: string): { v1: string, v2: string } {
+    // Remove markdown code blocks
+    const cleaned = raw
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+    
+    // Try direct JSON parse
+    try {
+      const parsed = JSON.parse(cleaned)
+      return {
+        v1: parsed.variation1 || parsed.variation_1 || '',
+        v2: parsed.variation2 || parsed.variation_2 || ''
+      }
+    } catch {
+      // JSON parse failed — try to extract manually
+      console.log('Direct parse failed, trying extraction')
+    }
+    
+    // Try to extract variation1 manually
+    const v1Match = cleaned.match(/"variation1"\s*:\s*"([\s\S]*?)(?:"\s*,\s*"variation2"|"\s*\}$)/)
+    const v2Match = cleaned.match(/"variation2"\s*:\s*"([\s\S]*?)(?:"\s*\}|"\s*$)/)
+    
+    if (v1Match) {
+      return {
+        v1: v1Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'),
+        v2: v2Match ? v2Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : ''
+      }
+    }
+    
+    // Last resort — return raw as v1
+    return { v1: cleaned, v2: '' }
+  }
+
+  function cleanText(text: string): string {
     return text
-      .replace(/‘|’/g, "'")
-      .replace(/“|”/g, '"')
-      .replace(/–/g, '-')
-      .replace(/—/g, '--')
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'")
-      .replace(/&amp;/g, '&')
+      .replace(/\u2018|\u2019/g, "'")
+      .replace(/\u201C|\u201D/g, '"')
+      .replace(/\u2013/g, '-')
+      .replace(/\u2014/g, '--')
+      .replace(/\\n/g, '\n')
       .trim()
   }
 
@@ -254,33 +298,25 @@ CRITICAL — Return ONLY this exact JSON format, nothing else:
     }
   }
 
-  try {
-    const cleaned = rawContent
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .trim()
+  // After getting content:
+  const { v1, v2 } = parseVariations(rawContent)
+  const variation1 = cleanText(v1)
+  const variation2 = cleanText(v2)
 
-    const parsed = JSON.parse(cleaned)
+  console.log('Parsed variation1 length:', variation1.length)
+  console.log('Parsed variation2 length:', variation2.length)
+  console.log('variation1 preview:', variation1.slice(0, 100))
 
-    const v1 = cleanContent(parsed.variation1 || parsed.variation_1 || '')
-    const v2 = cleanContent(parsed.variation2 || parsed.variation_2 || '')
-
+  // Save variation1 to DB
+  if (variation1) {
     await supabase.from('generated_posts').insert({
       user_id: user.id,
       original_idea: idea,
-      generated_text: v1,
+      generated_text: variation1,
       platform,
-      status: 'draft',
-    })
-
-    return NextResponse.json({ variation1: v1, variation2: v2, provider })
-  } catch (parseError) {
-    console.error('JSON parse failed, using raw content')
-    console.error('Parse error:', parseError)
-    return NextResponse.json({
-      variation1: cleanContent(rawContent),
-      variation2: '',
-      provider,
+      status: 'draft'
     })
   }
+
+  return NextResponse.json({ variation1, variation2, provider })
 }
