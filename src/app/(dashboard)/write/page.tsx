@@ -82,6 +82,7 @@ export default function WritePage() {
   const [writeMode, setWriteMode] = useState<WriteMode>('from idea')
   const [voiceOpen, setVoiceOpen] = useState(false)
   const [voice, setVoice] = useState<VoiceSettings>(DEFAULT_VOICE)
+  const [mobileTab, setMobileTab] = useState<'write' | 'output'>('write')
 
   // Generation
   const [generating, setGenerating] = useState(false)
@@ -194,6 +195,7 @@ export default function WritePage() {
     setGenerated(null)
     setError(null)
     setSavedToLibrary(false)
+    setMobileTab('output')
     showToast('Writing your post...')
 
     document.getElementById('output-panel')?.scrollIntoView({ 
@@ -248,8 +250,24 @@ export default function WritePage() {
     <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-5 lg:-m-6 animate-fade-in md:px-4 md:py-2">
 
       {/* ── Left panel: Controls ── */}
-      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto pb-28 md:pb-0">
+      <div className={clsx("w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto pb-28 md:pb-0", mobileTab === 'output' ? 'hidden md:block' : 'block')}>
         <div className="p-4 space-y-5 bg-white rounded-xl border border-[#E8E5E0] m-4">
+
+          {/* Mobile Tab Switcher */}
+          <div className="flex border-b border-[#E8E5E0] mb-4 md:hidden">
+            <button
+              onClick={() => setMobileTab('write')}
+              className={clsx("flex-1 text-center py-3 text-sm font-medium", mobileTab === 'write' ? "text-[#4F46E5] border-b-2 border-[#4F46E5]" : "text-[#6B6560]")}
+            >
+              Write
+            </button>
+            <button
+              onClick={() => setMobileTab('output')}
+              className={clsx("flex-1 text-center py-3 text-sm font-medium", mobileTab === 'output' ? "text-[#4F46E5] border-b-2 border-[#4F46E5]" : "text-[#6B6560]")}
+            >
+              Output
+            </button>
+          </div>
 
           <div>
             <h1 className="page-title">Write</h1>
@@ -461,8 +479,14 @@ export default function WritePage() {
       </div>
 
       {/* ── Right panel: Output ── */}
-      <div id="output-panel" className="flex-1 overflow-y-auto bg-background relative">
+      <div id="output-panel" className={clsx("flex-1 overflow-y-auto bg-background relative", mobileTab === 'write' ? 'hidden md:block' : 'block')}>
         <div className="p-8 h-full flex flex-col">
+
+          <div className="md:hidden mb-4">
+            <button onClick={() => setMobileTab('write')} className="text-sm text-[#4F46E5] font-medium hover:underline">
+              ← Edit
+            </button>
+          </div>
 
           {/* Empty state */}
           {!generating && !generated && !error && (
