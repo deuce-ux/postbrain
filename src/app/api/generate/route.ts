@@ -165,6 +165,15 @@ STRUCTURAL APPROACHES TO CONSIDER:
 Pick the structure that best fits this idea and story.
 Write as ${profile?.display_name || 'this person'}.
 
+LENGTH GUIDANCE:
+- Facebook: 500-800 words minimum. Let the story fully develop.
+- LinkedIn: 400-700 words. Short paragraphs but complete argument.
+- Twitter: 8-10 tweets. Each one earns its place.
+- Instagram: 200-350 words. Punchy but complete.
+
+Do not cut the post short. Write until the idea is fully expressed.
+A post that ends too early is worse than one that runs long.
+
 Generate 2 genuinely different variations — different structures, 
 different openings, same core idea.
 
@@ -188,7 +197,7 @@ Return ONLY valid JSON:
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.85,
-        max_tokens: 2048,
+        max_tokens: 4096,
       })
     })
     if (!response.ok) throw new Error(`Groq error: ${response.status}`)
@@ -207,7 +216,7 @@ Return ONLY valid JSON:
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: [{ parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.85, maxOutputTokens: 2048 },
+          generationConfig: { temperature: 0.85, maxOutputTokens: 4096 },
         }),
       }
     )
