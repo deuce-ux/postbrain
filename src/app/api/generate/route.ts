@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, voice, writingMode, swipeInspiration } = await req.json()
+  const { idea, platform, voice, writingMode, swipeInspiration, clarification } = await req.json()
 
   // Fetch profile for voice DNA
   const { data: profile } = await supabase
@@ -126,10 +126,22 @@ Apply this exact structural pattern to the user's idea.
 Make it sound like the user, not the reference post.
 ` : ''
 
+const clarificationContext = clarification ? `
+WHAT THEY WANT TO SAY:
+Main point: ${clarification.mainPoint}
+Tone: ${clarification.tone}
+${clarification.story ? `Personal story/example to use: ${clarification.story}` : ''}
+
+Use the main point as the core message.
+Match the ${clarification.tone} tone throughout.
+${clarification.story ? 'Weave the personal story/example naturally into the post.' : ''}
+` : ''
+
 const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
 
 ${structureInstructions}
 
+${clarificationContext}
 The idea/topic to write about:
 "${idea}"
 

@@ -117,9 +117,20 @@ export default function ThreadPage() {
       {/* Left Panel - Editor */}
       <div className="w-full md:w-1/2 p-4 overflow-y-auto">
         <div className="bg-white border border-[#E8E5E0] rounded-xl p-4 mb-4">
-          <div className="mb-4">
-            <h1 className="page-title">Thread Builder</h1>
-            <p className="text-sm text-[#6B6560]">Build and edit your Twitter thread</p>
+          <div className="mb-4 flex items-start justify-between">
+            <div>
+              <h1 className="page-title">Thread Builder</h1>
+              <p className="text-sm text-[#6B6560]">Build and edit your Twitter thread</p>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.setItem('clarification_target', 'thread')
+                router.push('/clarify')
+              }}
+              className="text-xs text-[#4F46E5] font-medium hover:underline whitespace-nowrap"
+            >
+              Start from idea
+            </button>
           </div>
 
           {showImport && (

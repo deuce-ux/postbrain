@@ -146,7 +146,6 @@ export default function WritePage() {
     if (ideaId) {
       setFromIdeaBank(true)
       localStorage.removeItem('selected_idea')
-      // Fetch the idea content
       fetch('/api/ideas')
         .then(r => r.json())
         .then((ideas: { id: string; content: string }[]) => {
@@ -156,7 +155,6 @@ export default function WritePage() {
         .catch(() => {})
     }
 
-    // Fetch swipe file posts
     fetch('/api/swipe')
       .then(r => r.json())
       .then(data => {
@@ -189,7 +187,11 @@ export default function WritePage() {
 
   // ── Generate ──────────────────────────────────────────────────────────────
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(async (clarification?: {
+    mainPoint: string
+    tone: string
+    story: string
+  }) => {
     if (!idea.trim() || generating) return
     setGenerating(true)
     setGenerated(null)
@@ -206,7 +208,14 @@ export default function WritePage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea, platform, voice, writingMode: writeMode, swipeInspiration: swipeInspiration || null }),
+        body: JSON.stringify({ 
+          idea, 
+          platform, 
+          voice, 
+          writingMode: writeMode, 
+          swipeInspiration: swipeInspiration || null,
+          clarification: clarification || null
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
@@ -224,6 +233,34 @@ export default function WritePage() {
       setGenerating(false)
     }
   }, [idea, platform, voice, writeMode, generating, swipeInspiration, showToast])
+
+  // ── Handle generate=true (from clarification) ─────────────────────────────
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('generate') === 'true') {
+      const clarificationStr = localStorage.getItem('clarification')
+      if (clarificationStr) {
+        try {
+          const clarification = JSON.parse(clarificationStr)
+          localStorage.removeItem('clarification')
+          if (clarification.idea) {
+            setIdea(clarification.idea)
+            setTimeout(() => {
+              handleGenerate({
+                mainPoint: clarification.mainPoint,
+                tone: clarification.tone,
+                story: clarification.story,
+              })
+            }, 100)
+          }
+        } catch (e) {
+          console.error('Failed to parse clarification:', e)
+        }
+      }
+      window.history.replaceState({}, '', '/write')
+    }
+  }, [handleGenerate])
 
   // ── Copy ─────────────────────────────────────────────────────────────────
 
@@ -467,7 +504,12 @@ export default function WritePage() {
 
           {/* Generate button */}
           <Button
-            onClick={handleGenerate}
+            onClick={() => {
+              if (idea.trim()) {
+                localStorage.setItem('clarification_idea', idea.trim())
+                router.push('/clarify')
+              }
+            }}
             loading={generating}
             disabled={!idea.trim()}
             className="w-full h-12 text-base"
@@ -510,7 +552,7 @@ export default function WritePage() {
           {error && !generating && (
             <div className="bg-destructive/10 border border-destructive/30 rounded-card p-4">
               <p className="text-sm text-destructive">{error}</p>
-              <button onClick={handleGenerate} className="text-xs text-destructive underline mt-1">
+              <button onClick={() => handleGenerate()} className="text-xs text-destructive underline mt-1">
                 Try again
               </button>
             </div>
@@ -552,7 +594,7 @@ export default function WritePage() {
                 <Button variant="secondary" onClick={handleCopy} size="sm">
                   {copied ? <><Check className="h-3.5 w-3.5" /> Copied!</> : <><Copy className="h-3.5 w-3.5" /> Copy</>}
                 </Button>
-                <Button variant="secondary" onClick={handleGenerate} size="sm">
+                <Button variant="secondary" onClick={() => handleGenerate()} size="sm">
                   <RefreshCw className="h-3.5 w-3.5" /> Regenerate
                 </Button>
                 <Button

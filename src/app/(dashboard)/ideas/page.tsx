@@ -146,9 +146,9 @@ export default function IdeasPage() {
   }
 
   const handleWriteFrom = (idea: Idea) => {
-    localStorage.setItem('selected_idea', idea.id)
+    localStorage.setItem('clarification_idea', idea.content)
     updateIdea(idea.id, { status: 'ready' })
-    router.push('/write')
+    router.push('/clarify')
   }
 
   const filtered = ideas.filter(idea => {
