@@ -145,7 +145,11 @@ ABSOLUTE RULES:
 - Never repeat a key phrase more than twice in one post
 - Never sound like AI wrote it
 - Do NOT force mentions of their project unless it fits naturally
-- Stay within their stated content topics only`
+- Stay within their stated content topics only
+- NEVER invent fictional people or fake names
+- Only use real names if the user explicitly mentioned them in their story or clarification
+- If no real names are provided, write without naming anyone
+- "A friend", "someone I know", "a designer I met" is fine — making up Emeka, Nneoma, Chinedu, Ifeoma etc is NOT fine`
 
   const structureInstructions = swipeInspiration ? `
 STRUCTURE TO USE:
@@ -253,6 +257,18 @@ Return ONLY valid JSON:
     return content
   }
 
+  const cleanContent = (text: string) => {
+    return text
+      .replace(/‘|’/g, "'")
+      .replace(/“|”/g, '"')
+      .replace(/–/g, '-')
+      .replace(/—/g, '--')
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&')
+      .trim()
+  }
+
   let rawContent: string
   let provider = 'gemini'
 
@@ -272,21 +288,33 @@ Return ONLY valid JSON:
     }
   }
 
-  let result: { variation1: string; variation2: string }
   try {
-    const clean = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    result = JSON.parse(clean)
-  } catch {
-    result = { variation1: rawContent, variation2: '' }
+    const cleaned = rawContent
+      .replace(/```json\n?/g, '')
+      .replace(/```\n?/g, '')
+      .trim()
+
+    const parsed = JSON.parse(cleaned)
+
+    const v1 = cleanContent(parsed.variation1 || '')
+    const v2 = cleanContent(parsed.variation2 || '')
+
+    await supabase.from('generated_posts').insert({
+      user_id: user.id,
+      original_idea: idea,
+      generated_text: v1,
+      platform,
+      status: 'draft',
+    })
+
+    return NextResponse.json({ variation1: v1, variation2: v2, provider })
+  } catch (parseError) {
+    console.error('JSON parse error:', parseError)
+    console.error('Raw content:', rawContent)
+    return NextResponse.json({
+      variation1: cleanContent(rawContent),
+      variation2: '',
+      provider,
+    })
   }
-
-  await supabase.from('generated_posts').insert({
-    user_id: user.id,
-    original_idea: idea,
-    generated_text: result.variation1,
-    platform,
-    status: 'draft',
-  })
-
-  return NextResponse.json({ variation1: result.variation1, variation2: result.variation2, provider })
 }

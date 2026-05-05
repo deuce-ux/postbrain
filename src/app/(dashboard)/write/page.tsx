@@ -242,9 +242,9 @@ export default function WritePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
-      setVariation1(data.variation1 || '')
-      setVariation2(data.variation2 || '')
-      setGenerated(data.variation1 || '')
+      if (data.variation1) setVariation1(data.variation1)
+      if (data.variation2) setVariation2(data.variation2)
+      setGenerated(data.variation1 || data.content || '')
       setSelectedVariation(1)
       setGenerationProvider(data.provider || 'groq')
 
