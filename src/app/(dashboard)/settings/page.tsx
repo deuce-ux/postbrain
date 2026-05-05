@@ -21,6 +21,7 @@ interface Profile {
   display_name?: string
   role?: string
   project_description?: string
+  unique_angle?: string
   content_topics?: string[]
   voice_style?: string
   voice_examples?: string[]
@@ -60,6 +61,7 @@ export default function SettingsPage() {
     display_name: '',
     role: '',
     project_description: '',
+    unique_angle: '',
     content_topics: [] as string[],
   })
 
@@ -84,6 +86,7 @@ export default function SettingsPage() {
             display_name: data.display_name || '',
             role: data.role || '',
             project_description: data.project_description || '',
+            unique_angle: data.unique_angle || '',
             content_topics: data.content_topics || [],
             voice_style: data.voice_style || '',
             voice_examples: data.voice_examples || [],
@@ -94,6 +97,7 @@ export default function SettingsPage() {
             display_name: data.display_name || '',
             role: data.role || '',
             project_description: data.project_description || '',
+            unique_angle: data.unique_angle || '',
             content_topics: data.content_topics || [],
           })
         }
@@ -221,7 +225,18 @@ export default function SettingsPage() {
                 onChange={e => setProfileForm(prev => ({ ...prev, project_description: e.target.value }))}
                 placeholder="e.g. AI-powered content tool"
               />
-              
+
+              <div className="space-y-1.5">
+                <label className="label">Your unique angle</label>
+                <textarea
+                  value={profileForm.unique_angle}
+                  onChange={e => setProfileForm(prev => ({ ...prev, unique_angle: e.target.value }))}
+                  placeholder="What's your specific perspective or contrarian take? e.g. I believe most productivity advice fails because it ignores energy management"
+                  rows={3}
+                  className="input-base resize-none"
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="label">Content topics</label>
                 <div className="flex flex-wrap gap-2">

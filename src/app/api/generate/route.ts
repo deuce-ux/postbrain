@@ -23,13 +23,13 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, writingMode, swipeInspiration, clarification } = await req.json()
+  const { idea, platform, swipeInspiration, clarification } = await req.json()
   console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
   const { data: profile } = await supabase
     .from('profiles')
-    .select('voice_style, voice_examples, voice_dna, display_name, role, project_description, content_topics')
+    .select('voice_style, voice_examples, voice_dna, display_name, role, project_description, content_topics, unique_angle')
     .eq('id', user.id)
     .single()
 
@@ -85,8 +85,15 @@ export async function POST(req: Request) {
 - This is storytelling, not a Twitter thread`,
   }
 
+  const styleDescriptions: Record<string, string> = {
+    conversational: 'casual and direct, like texting a smart friend — short sentences, real talk, no fluff',
+    professional: 'polished but personal — credible without being corporate, clear and confident',
+    bold: 'strong opinions, no hedging, punchy and direct — says what most people think but won\'t say',
+    educational: 'breaks things down, uses analogies, makes complex ideas feel simple and accessible',
+  }
+
   const voiceContext = profile?.voice_examples?.length
-    ? `USER'S VOICE - match this writing style EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
+    ? `USER'S WRITING SAMPLES — match this style exactly:\n${(profile.voice_examples as string[]).join('\n\n---\n\n')}`
     : ''
 
   const structureInstructions = swipeInspiration ? `
@@ -97,44 +104,48 @@ Emotional trigger: ${swipeInspiration.emotional_trigger || 'curiosity'}
 Reference (USE STRUCTURE ONLY, NOT CONTENT): "${(swipeInspiration.content || '').slice(0, 300)}..."
 ` : ''
 
-  const systemPrompt = `You are helping write a social media post in the user's authentic voice.
+  const systemPrompt = `You are a ghostwriter. Write in the user's exact voice. Do not sound like AI.
 
 ${voiceContext}
 
-${voiceDNA ? `VOICE ANALYSIS:
-Style: ${voiceDNA.style_summary}
-Sentence patterns: ${voiceDNA.sentence_patterns}
+${voiceDNA ? `VOICE PROFILE:
+Summary: ${voiceDNA.style_summary}
+Sentence style: ${voiceDNA.sentence_patterns}
 Tone: ${voiceDNA.tone}
-Opens like: ${voiceDNA.opening_style}
-Closes like: ${voiceDNA.closing_style}
+How they open: ${voiceDNA.opening_style}
+How they close: ${voiceDNA.closing_style}
 Unique traits: ${(voiceDNA.unique_traits || []).join(', ')}
-AVOID: ${voiceDNA.avoid}` : ''}
+Signature phrases: ${(voiceDNA.signature_phrases || []).join(', ')}
+NEVER do: ${voiceDNA.avoid}` : `Writing style: ${styleDescriptions[profile?.voice_style || 'conversational']}`}
 
-USER'S IDEA:
-Topic: ${idea}
-Write mode: ${writingMode || 'from idea'}
-${clarification?.mainPoint ? `Main point: ${clarification.mainPoint}` : ''}
-${clarification?.tone ? `Tone: ${clarification.tone}` : ''}
-${clarification?.story ? `Personal story/example to use: ${clarification.story}` : ''}
+${profile?.unique_angle ? `THEIR UNIQUE ANGLE / PERSPECTIVE:\n${profile.unique_angle}` : ''}
 
-PLATFORM: ${platform}
+WHO THEY ARE:
+${profile?.display_name ? `Name: ${profile.display_name}` : ''}
+${profile?.role ? `Role: ${profile.role}` : ''}
+${profile?.project_description ? `Building: ${profile.project_description}` : ''}
+
+THE POST:
+Idea: ${idea}
+${clarification?.mainPoint ? `Core message: ${clarification.mainPoint}` : ''}
+${clarification?.tone ? `Tone for this post: ${clarification.tone}` : ''}
+${clarification?.story ? `Personal story/example: ${clarification.story}` : ''}
 
 ${structureInstructions}
 
-CRITICAL RULES:
-1. Write in their voice - match vocabulary, rhythm, tone from samples
-2. DO NOT force business mentions unless idea is explicitly about it
-3. Be specific - use real numbers, names, concrete details from their story
-4. Sound human - like texting a friend, not writing an essay
-5. Keep their personality and quirks
-6. ZERO hashtags
-7. ZERO corporate buzzwords
-8. If they gave a personal story, USE IT - be specific, include names if mentioned
-9. DO NOT write a numbered thread for Facebook - write flowing paragraphs
+RULES:
+- Write in their voice — match vocabulary, rhythm, sentence length from samples
+- Use their unique angle and perspective if relevant
+- No hashtags. No corporate buzzwords. No "In today's world..."
+- Be specific: real numbers, names, concrete details
+- Sound human. Like they wrote it themselves.
+- If a personal story was given, use it — be specific
+- For Facebook: flowing paragraphs only, no numbered lists or threads
 
 ${platformRules[platform] || ''}
 
-Generate 2 genuinely different variations. Return ONLY valid JSON:
+Write 2 genuinely different versions. Different angles, different hooks, different structure — not just rewording.
+Return ONLY valid JSON:
 {
   "variation1": "full post text",
   "variation2": "full post text"

@@ -65,6 +65,7 @@ export default function VoicePage() {
   const [displayName, setDisplayName] = useState('')
   const [role, setRole] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
+  const [uniqueAngle, setUniqueAngle] = useState('')
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [customTopic, setCustomTopic] = useState('')
 
@@ -92,6 +93,7 @@ export default function VoicePage() {
         if (profile.display_name) setDisplayName(profile.display_name)
         if (profile.role) setRole(profile.role)
         if (profile.project_description) setProjectDescription(profile.project_description)
+        if (profile.unique_angle) setUniqueAngle(profile.unique_angle)
         if (profile.content_topics && Array.isArray(profile.content_topics)) {
           setSelectedTopics(profile.content_topics)
         }
@@ -130,11 +132,11 @@ export default function VoicePage() {
   }
 
   const addExample = () => {
-    if (examples.length < 5) setExamples(prev => [...prev, ''])
+    setExamples(prev => [...prev, ''])
   }
 
   const removeExample = (i: number) => {
-    if (examples.length > 3) setExamples(prev => prev.filter((_, idx) => idx !== i))
+    if (examples.length > 1) setExamples(prev => prev.filter((_, idx) => idx !== i))
   }
 
   // ── Analyze voice ─────────────────────────────────────────────────────────
@@ -176,6 +178,7 @@ export default function VoicePage() {
           display_name: displayName.trim() || null,
           role: role.trim() || null,
           project_description: projectDescription.trim() || null,
+          unique_angle: uniqueAngle.trim() || null,
           content_topics: selectedTopics,
           voice_style: voiceStyle,
           voice_examples: examples.filter(e => e.trim()),
@@ -190,7 +193,7 @@ export default function VoicePage() {
       setToast('Failed to save. Please try again.')
       setSaving(false)
     }
-  }, [displayName, role, projectDescription, selectedTopics, voiceStyle, examples, analysis, router])
+  }, [displayName, role, projectDescription, uniqueAngle, selectedTopics, voiceStyle, examples, analysis, router])
 
   // ── Facebook import success ───────────────────────────────────────────────
 
@@ -253,6 +256,17 @@ export default function VoicePage() {
               onChange={e => setProjectDescription(e.target.value)}
               placeholder="e.g. Building a SaaS for content creators"
               className="input-base"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="label">Your unique angle <span className="text-text-secondary font-normal">(optional)</span></label>
+            <textarea
+              value={uniqueAngle}
+              onChange={e => setUniqueAngle(e.target.value)}
+              placeholder="What's your specific perspective or contrarian take? e.g. I believe most productivity advice fails because it ignores energy management"
+              rows={3}
+              className="input-base resize-none"
             />
           </div>
 
@@ -374,7 +388,7 @@ export default function VoicePage() {
               <div key={i} className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="label">Post {i + 1}</label>
-                  {i >= 3 && (
+                  {examples.length > 1 && (
                     <button
                       onClick={() => removeExample(i)}
                       className="text-xs text-text-secondary hover:text-destructive transition-colors"
@@ -393,14 +407,12 @@ export default function VoicePage() {
               </div>
             ))}
 
-            {examples.length < 5 && (
-              <button
-                onClick={addExample}
-                className="flex items-center gap-1.5 text-sm text-accent hover:text-accent-hover font-medium transition-colors"
-              >
-                <Plus className="h-4 w-4" /> Add another post
-              </button>
-            )}
+            <button
+              onClick={addExample}
+              className="flex items-center gap-1.5 text-sm text-accent hover:text-accent-hover font-medium transition-colors"
+            >
+              <Plus className="h-4 w-4" /> Add another post
+            </button>
           </div>
 
           {/* Analyze button */}

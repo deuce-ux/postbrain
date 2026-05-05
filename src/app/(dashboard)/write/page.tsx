@@ -696,10 +696,16 @@ export default function WritePage() {
               )}
 
               {/* Content */}
-              <div className="bg-surface border border-border rounded-card p-6">
-                <p className="font-sans text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-                  {generated}
-                </p>
+              <div className="bg-surface border border-border rounded-card p-6 overflow-y-auto max-h-[60vh] md:max-h-none">
+                <div className="space-y-4">
+                  {generated.split('\n\n').map((paragraph, index) => (
+                    paragraph.trim() ? (
+                      <p key={index} className="text-sm text-[#1A1714] leading-relaxed">
+                        {paragraph.trim()}
+                      </p>
+                    ) : null
+                  ))}
+                </div>
               </div>
 
               {/* Action bar */}
@@ -782,10 +788,22 @@ export default function WritePage() {
                       </button>
                     ))}
                   </div>
-                  <div className="bg-white border border-[#E8E5E0] rounded-lg p-4 mb-3">
-                    <p className="text-sm text-[#1A1714] whitespace-pre-wrap">
-                      {generatingVariations ? 'Generating variations...' : variations?.[activeVariation] || 'No variation available'}
-                    </p>
+                  <div className="bg-white border border-[#E8E5E0] rounded-lg p-4 mb-3 overflow-y-auto max-h-[60vh] md:max-h-none">
+                    {generatingVariations ? (
+                      <p className="text-sm text-[#1A1714]">Generating variations...</p>
+                    ) : variations?.[activeVariation] ? (
+                      <div className="space-y-4">
+                        {variations[activeVariation]!.split('\n\n').map((paragraph, index) => (
+                          paragraph.trim() ? (
+                            <p key={index} className="text-sm text-[#1A1714] leading-relaxed">
+                              {paragraph.trim()}
+                            </p>
+                          ) : null
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[#1A1714]">No variation available</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
