@@ -141,6 +141,7 @@ export default function WritePage() {
   const [repurposedContent, setRepurposedContent] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const generateFromParamsRef = useRef(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const [clarificationData, setClarificationData] = useState<ClarificationData | null>(null)
@@ -201,8 +202,9 @@ export default function WritePage() {
 
   const handleGenerate = useCallback(async (clarificationOverride?: ClarificationData) => {
     const activeClarification = clarificationOverride || clarificationData
+    const activeIdea = (clarificationOverride?.idea ?? idea).trim()
 
-    if (!idea.trim() || generating) return
+    if (!activeIdea || generating) return
     setGenerating(true)
     setGenerated(null)
     setError(null)
@@ -210,19 +212,19 @@ export default function WritePage() {
     setMobileTab('output')
     showToast('Writing your post...')
 
-    document.getElementById('output-panel')?.scrollIntoView({ 
-      behavior: 'smooth' 
+    document.getElementById('output-panel')?.scrollIntoView({
+      behavior: 'smooth'
     })
 
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          idea, 
-          platform, 
-          voice, 
-          writingMode: writeMode, 
+        body: JSON.stringify({
+          idea: activeIdea,
+          platform,
+          voice,
+          writingMode: writeMode,
           swipeInspiration: swipeInspiration || null,
           clarification: activeClarification ? {
             mainPoint: activeClarification.mainPoint,
@@ -251,24 +253,22 @@ export default function WritePage() {
   // ── Handle generate=true (from clarification) ─────────────────────────────
 
   useEffect(() => {
+    if (generateFromParamsRef.current) return
     if (searchParams.get('generate') === 'true') {
       const saved = localStorage.getItem('clarification')
       if (saved) {
+        generateFromParamsRef.current = true
         try {
           const clarification = JSON.parse(saved)
           localStorage.removeItem('clarification')
-          
+
           if (clarification.idea) setIdea(clarification.idea)
           if (clarification.platform) setPlatform(clarification.platform)
           if (clarification.writeMode) setWriteMode(clarification.writeMode)
-          
+
           setClarificationData(clarification)
           setMobileTab('output')
-          
-          setTimeout(() => {
-            handleGenerate(clarification)
-          }, 500)
-          
+          handleGenerate(clarification)
           window.history.replaceState({}, '', '/write')
         } catch (e) {
           console.error('Failed to parse clarification:', e)
