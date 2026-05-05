@@ -246,11 +246,13 @@ export default function WritePage() {
         }),
       })
       const data = await res.json()
+      console.log('Generation response:', data)
       if (!res.ok) throw new Error(data.error || 'Generation failed')
-      if (data.variation1) setVariation1(data.variation1)
-      if (data.variation2) setVariation2(data.variation2)
-      setGenerated(data.variation1 || data.content || '')
+      setVariation1(data.variation1 || '')
+      setVariation2(data.variation2 || '')
+      setGenerated(data.variation1 || '')
       setSelectedVariation(1)
+      setMobileTab('output')
       setGenerationProvider(data.provider || 'groq')
 
       setTimeout(() => {
@@ -717,23 +719,31 @@ export default function WritePage() {
               </div>
 
               {/* Version A / B tabs */}
-              {variation2 && (
-                <div className="flex gap-1">
+              {variation2 && variation2.length > 10 && (
+                <div className="flex gap-2 mb-3 border-b border-[#E8E5E0] pb-3">
                   <button
-                    onClick={() => { setSelectedVariation(1); setGenerated(variation1) }}
-                    className={clsx(
-                      'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
-                      selectedVariation === 1 ? 'bg-[#4F46E5] text-white' : 'text-[#6B6560]'
-                    )}
+                    onClick={() => {
+                      setSelectedVariation(1)
+                      setGenerated(variation1)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                      selectedVariation === 1
+                        ? 'bg-[#4F46E5] text-white'
+                        : 'text-[#6B6560] hover:text-[#1A1714]'
+                    }`}
                   >
                     Version A
                   </button>
                   <button
-                    onClick={() => { setSelectedVariation(2); setGenerated(variation2) }}
-                    className={clsx(
-                      'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
-                      selectedVariation === 2 ? 'bg-[#4F46E5] text-white' : 'text-[#6B6560]'
-                    )}
+                    onClick={() => {
+                      setSelectedVariation(2)
+                      setGenerated(variation2)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                      selectedVariation === 2
+                        ? 'bg-[#4F46E5] text-white'
+                        : 'text-[#6B6560] hover:text-[#1A1714]'
+                    }`}
                   >
                     Version B
                   </button>

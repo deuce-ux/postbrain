@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, swipeInspiration, clarification, writingMode } = await req.json()
+  const { idea, platform, clarification, writingMode } = await req.json()
   console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
@@ -47,171 +47,137 @@ export async function POST(req: Request) {
   const platformRules: Record<string, string> = {
     twitter: `Platform: X/Twitter Thread
 - Hook tweet: 1-2 sentences. Stop the scroll.
-- Each tweet = one clear thought, 1-3 sentences max
-- Short punchy sentences. Vary length dramatically.
+- 5-8 tweets. Each tweet = one clear thought.
+- 1-3 sentences per tweet. Under 280 chars.
 - Number them: 1/ 2/ 3/
-- Each under 280 characters
-- 8-10 tweets minimum
+- End with summary or question
 - NO hashtags`,
 
     linkedin: `Platform: LinkedIn
-FORMATTING RULES — FOLLOW EXACTLY:
-- Maximum 3 sentences per paragraph
-- After every key statement — add a line break
-- Let important lines stand alone like this.
-- Use single-sentence paragraphs for emphasis.
-- Short paragraphs. White space. Room to breathe.
-- 400-700 words
-- NO hashtags
-- NO bullet points unless they naturally fit
-
-STRUCTURE:
 - Line 1: Hook. One sentence. Make it land.
-- Body: Build the argument in short paragraphs
-- Key insight: Let it stand alone on its own line
-- Close: Question or strong final statement`,
+- Short paragraphs — 2-3 sentences each
+- Single-line paragraphs for emphasis
+- Like this.
+- 400-700 words
+- Professional but with personality
+- Optional engagement question at end
+- NO hashtags`,
 
     instagram: `Platform: Instagram
-FORMATTING:
 - First 2 lines: Hook before the "more" cutoff
-- Very short paragraphs — 1-2 sentences each
-- Line breaks between every paragraph
-- Casual, personal, like talking to a friend
+- Short paragraphs — 1-2 sentences
+- Line breaks between paragraphs
+- Casual, personal, friend-to-friend
 - 200-350 words
 - NO hashtags`,
 
     facebook: `Platform: Facebook
-FORMATTING RULES — FOLLOW EXACTLY:
-- Short paragraphs. 2-3 sentences maximum per paragraph.
-- Add a line break between every single paragraph.
+- Opening: One scene or bold statement
+- Short paragraphs — 2-3 sentences MAX
+- Line breaks between every paragraph
 - Key sentences stand alone on their own line.
 - Like this.
-- Then continue.
-- Write in scenes — set up a moment, develop it, resolve it
-- Use dialogue if the story has it: "He said, 'X'"
-- 500-800 words minimum
+- 500-800 words
+- Tell the full story — setup, middle, resolution
+- Use dialogue if the story has it
+- End with one question
 - NO hashtags
-- NO numbered lists
-- NO bullet points
-- This is storytelling. Not a thread. Not an essay.
-
-STRUCTURE:
-- Opening: One scene or one bold statement
-- Development: Tell the story in short paragraphs
-- Contrast: Show two paths or two people if it fits
-- Insight: The lesson — let it breathe on its own line
-- Close: One question to drive comments`,
+- NOT a thread — flowing paragraphs only`,
   }
 
   const styleDescriptions: Record<string, string> = {
-    conversational: 'casual and direct, like texting a smart friend',
-    professional: 'professional but personal, credible without being corporate',
-    bold: 'bold, strong opinions, no hedging, provocative',
-    educational: 'educational, breaks things down, makes complex things simple',
+    conversational: 'casual and conversational, like texting a friend',
+    professional: 'professional but personal, LinkedIn-style',
+    bold: 'bold and controversial, strong opinions and hot takes',
+    educational: 'educational and helpful, teaching-focused',
   }
 
-  const systemPrompt = `You are a world-class social media ghostwriter.
-You write posts that stop people mid-scroll.
+  const voiceContext = profile?.voice_examples?.length
+    ? `USER'S VOICE (match this writing style):\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
+    : ''
 
-Your writing principles:
-- SPECIFIC > GENERIC: Real names, real numbers, real moments
-- STORY > LECTURE: Show a scene, don't explain a concept
-- CONTRAST > STATEMENT: Show two people, two outcomes, two paths
-- SHORT > LONG sentences on average. Vary dramatically.
-- DIRECT > HEDGED: Say the thing. Don't qualify everything.
-- HUMAN > POLISHED: Messy is fine. Perfect is suspicious.
+  const systemPrompt = `You are a social media ghostwriter. Your writing:
+- Sounds like a real person sharing their genuine experience
+- Is ${styleDescriptions[profile?.voice_style || 'conversational']}
+- Tells stories with specific details from THEIR actual life
+- Has personality — not corporate, not preachy
+- Stays focused on topics they care about: ${(profile?.content_topics || []).join(', ')}
 
 WHO YOU ARE WRITING FOR:
 Name: ${profile?.display_name || 'A creator'}
 Role: ${profile?.role || 'Creator'}
 Building: ${profile?.project_description || 'their work'}
 ${profile?.unique_angle ? `Unique angle: ${profile.unique_angle}` : ''}
-Topics: ${(profile?.content_topics || []).join(', ')}
-Style: ${styleDescriptions[profile?.voice_style || 'conversational']}
 
-${voiceDNA ? `THEIR VOICE:
+Key principles:
+- Specific > Generic (real names, real numbers, real moments from their story)
+- Story > Lecture (show a scene, don't explain a concept)
+- Contrast > Statement (two people, two paths, two outcomes)
+- Personal > Universal (make it clearly THEIR story)
+- Stay on topic — only write about their stated content focus areas
+
+${voiceDNA ? `VOICE FINGERPRINT:
 ${voiceDNA.style_summary}
-Patterns: ${voiceDNA.sentence_patterns}
+Sentence style: ${voiceDNA.sentence_patterns}
 Tone: ${voiceDNA.tone}
+Opens like: ${voiceDNA.opening_style}
+Closes like: ${voiceDNA.closing_style}
+Unique: ${(voiceDNA.unique_traits || []).join(', ')}
 NEVER: ${voiceDNA.avoid}` : ''}
 
-${profile?.voice_examples?.length ? `THEIR WRITING — STUDY AND MATCH:
-${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}` : ''}
+${voiceContext}
 
 ABSOLUTE RULES:
 - Zero hashtags
-- Zero: "I've been thinking", "I want to share", "Let me tell you"
-- Zero: brethren, synergy, leverage, game-changer, touch base
-- Never repeat a key phrase more than twice in one post
-- Never sound like AI wrote it
-- Do NOT force mentions of their project unless it fits naturally
-- Stay within their stated content topics only
-- NEVER invent fictional people or fake names
-- Only use real names if the user explicitly mentioned them in their story or clarification
-- If no real names are provided, write without naming anyone
-- "A friend", "someone I know", "a designer I met" is fine — making up Emeka, Nneoma, Chinedu, Ifeoma etc is NOT fine`
-
-  const structureInstructions = swipeInspiration ? `
-STRUCTURE TO USE:
-Hook type: ${swipeInspiration.hook_type}
-Pattern: ${swipeInspiration.structure_notes || 'Follow the hook type pattern'}
-Emotional trigger: ${swipeInspiration.emotional_trigger || 'curiosity'}
-Reference (USE STRUCTURE ONLY, NOT CONTENT): "${(swipeInspiration.content || '').slice(0, 300)}..."
-` : ''
+- Zero invented names — only use names from user's story
+- Never: "I've been thinking", "I want to share", brethren,
+  synergy, leverage, game-changer, touch base, circle back,
+  "at the end of the day", "it is what it is"
+- Never repeat a key phrase more than twice
+- DO NOT mention their project unless it fits naturally
+- Short paragraphs — 2-3 sentences max
+- Key statements get their own line
+- Sound human, not polished`
 
   const clarificationContext = clarification ? `
-WHAT THEY WANT TO SAY: ${clarification.mainPoint}
-TONE: ${clarification.tone}
-${clarification.story ? `PERSONAL STORY/EXPERIENCE:
-${clarification.story}
+IDEA DETAILS:
+Main point: ${clarification.mainPoint}
+Tone: ${clarification.tone}
+${clarification.story ? `Personal story to use: ${clarification.story}
 
-Use this story as the backbone. Be specific. 
-If they named people, use those names.
+Use this story as the backbone. Be specific.
+Only use names that appear in this story.
 If they mentioned numbers or places, use them.` : ''}` : ''
 
   const userPrompt = `${platformRules[platform] || platformRules.facebook}
 
-IDEA: ${idea}
+TOPIC: ${idea}
 WRITE MODE: ${writingMode}
 ${clarificationContext}
 
-${structureInstructions}
-
-STRUCTURAL APPROACHES TO CONSIDER:
-- Two people, same tool/situation, different outcomes (contrast)
-- Before vs After (transformation story)  
+STRUCTURAL APPROACHES — pick what fits:
+- Two people, same situation, different outcomes (contrast)
+- Before vs After (transformation)
 - The thing everyone believes vs the truth (contrarian)
-- A specific moment that reveals a bigger truth (scene-setting)
-- A question that reframes how people think about something
+- A specific moment that reveals a bigger truth
+- A challenge/question that reframes how people think
 
-Pick the structure that best fits this idea and story.
 Write as ${profile?.display_name || 'this person'}.
 
-LENGTH GUIDANCE:
-- Facebook: 500-800 words minimum. Let the story fully develop.
-- LinkedIn: 400-700 words. Short paragraphs but complete argument.
-- Twitter: 8-10 tweets. Each one earns its place.
-- Instagram: 200-350 words. Punchy but complete.
+Generate 2 genuinely different variations.
+Different openings. Different structures. Same core idea.
 
-Do not cut the post short. Write until the idea is fully expressed.
-A post that ends too early is worse than one that runs long.
+LENGTH: Write until the idea is fully expressed.
+Facebook/LinkedIn minimum 500 words. Don't cut short.
 
-FORMATTING REMINDER:
-- Break paragraphs every 2-3 sentences
-- Let key statements stand alone on their own line
-- White space is not wasted space — it's emphasis
-- Write how a real person texts, not how an academic writes
-- Short sentences hit harder than long ones.
-- Like this.
+FORMATTING:
+- Short paragraphs
+- Key lines stand alone
+- White space is emphasis
+- Write how a real person thinks, not how an academic writes
 
-Generate 2 genuinely different variations — different structures,
-different openings, same core idea.
-
-Return ONLY valid JSON:
-{
-  "variation1": "full post text here",
-  "variation2": "full post text here"
-}`
+CRITICAL — Return ONLY this exact JSON format, nothing else:
+{"variation1": "full post text", "variation2": "full post text"}`
 
   async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -296,8 +262,8 @@ Return ONLY valid JSON:
 
     const parsed = JSON.parse(cleaned)
 
-    const v1 = cleanContent(parsed.variation1 || '')
-    const v2 = cleanContent(parsed.variation2 || '')
+    const v1 = cleanContent(parsed.variation1 || parsed.variation_1 || '')
+    const v2 = cleanContent(parsed.variation2 || parsed.variation_2 || '')
 
     await supabase.from('generated_posts').insert({
       user_id: user.id,
@@ -309,8 +275,8 @@ Return ONLY valid JSON:
 
     return NextResponse.json({ variation1: v1, variation2: v2, provider })
   } catch (parseError) {
-    console.error('JSON parse error:', parseError)
-    console.error('Raw content:', rawContent)
+    console.error('JSON parse failed, using raw content')
+    console.error('Parse error:', parseError)
     return NextResponse.json({
       variation1: cleanContent(rawContent),
       variation2: '',
