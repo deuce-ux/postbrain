@@ -33,8 +33,6 @@ export async function POST(req: Request) {
       .eq('id', user.id)
       .single()
 
-    const GROQ_API_KEY = process.env.GROQ_API_KEY!
-
     const prompt = `Generate 8 different opening hooks for a ${platform} post about this idea:
 "${idea}"
 
@@ -53,26 +51,76 @@ Generate exactly 8 hooks using these different types:
 Return ONLY a JSON array of 8 strings, no explanation:
 ["hook1", "hook2", "hook3", "hook4", "hook5", "hook6", "hook7", "hook8"]`
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.9,
-        max_tokens: 1024,
+    const generateWithOpenRouter = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
+          'HTTP-Referer': 'https://postbrain-eight.vercel.app',
+          'X-Title': 'PostBrain'
+        },
+        body: JSON.stringify({
+          model: 'qwen/qwen3-next-80b-a3b-instruct:free',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
       })
-    })
+      if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from OpenRouter')
+      return content
+    }
 
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-    const clean = content.replace(/```json|```/g, '').trim()
+    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
+      })
+      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from Groq')
+      return content
+    }
+
+    let rawContent: string
+    let provider = 'openrouter'
+
+    try {
+      rawContent = await generateWithOpenRouter('', prompt)
+    } catch (openRouterError) {
+      console.warn('OpenRouter failed, falling back to Groq:', openRouterError)
+      provider = 'groq'
+      try {
+        rawContent = await generateWithGroq('', prompt)
+      } catch {
+        console.error('Both providers failed')
+        return NextResponse.json({ error: 'Failed to generate hooks' }, { status: 500 })
+      }
+    }
+
+    const clean = rawContent.replace(/```json|```/g, '').trim()
     const hooks = JSON.parse(clean)
 
-    return NextResponse.json({ hooks })
+    return NextResponse.json({ hooks, provider })
   } catch (err) {
     console.error('Generate hooks error:', err)
     return NextResponse.json({ error: 'Failed to generate hooks' }, { status: 500 })

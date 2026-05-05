@@ -156,25 +156,48 @@ The input to write about:
 
 Write the complete post now. Return only the post content, no explanation.`
 
-  const GROQ_API_KEY = process.env.GROQ_API_KEY!
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
+  async function generateWithOpenRouter(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
+        'HTTP-Referer': 'https://postbrain-eight.vercel.app',
+        'X-Title': 'PostBrain'
+      },
+      body: JSON.stringify({
+        model: 'qwen/qwen3-next-80b-a3b-instruct:free',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.85,
+        max_tokens: 2048,
+      })
+    })
+    if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`)
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+    if (!content) throw new Error('No content from OpenRouter')
+    return content
+  }
 
-  async function generateWithGroq(): Promise<string> {
+  async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0.85,
         max_tokens: 2048,
-      }),
+      })
     })
     if (!response.ok) throw new Error(`Groq error: ${response.status}`)
     const data = await response.json()
@@ -183,41 +206,18 @@ Write the complete post now. Return only the post content, no explanation.`
     return content
   }
 
-  async function generateWithGemini(): Promise<string> {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ parts: [{ text: userPrompt }] }],
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: 2048,
-          },
-        }),
-      }
-    )
-    if (!response.ok) throw new Error(`Gemini error: ${response.status}`)
-    const data = await response.json()
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-    if (!content) throw new Error('No content from Gemini')
-    return content
-  }
-
   let content: string
-  let provider = 'groq'
+  let provider = 'openrouter'
 
   try {
-    content = await generateWithGroq()
-  } catch (groqError) {
-    console.warn('Groq failed, falling back to Gemini:', groqError)
-    provider = 'gemini'
+    content = await generateWithOpenRouter(systemPrompt, userPrompt)
+  } catch (openRouterError) {
+    console.warn('OpenRouter failed, falling back to Groq:', openRouterError)
+    provider = 'groq'
     try {
-      content = await generateWithGemini()
-    } catch (geminiError) {
-      console.error('Both providers failed:', geminiError)
+      content = await generateWithGroq(systemPrompt, userPrompt)
+    } catch {
+      console.error('Both providers failed')
       return NextResponse.json(
         { error: 'Generation failed. Please try again.' },
         { status: 500 }

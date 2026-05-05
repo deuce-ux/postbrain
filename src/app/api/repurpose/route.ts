@@ -27,8 +27,6 @@ export async function POST(req: Request) {
 
     const { content, fromPlatform, toPlatform } = await req.json()
 
-    const GROQ_API_KEY = process.env.GROQ_API_KEY!
-
     const platformFormats: Record<string, string> = {
       twitter: 'an 8-10 tweet thread. Number tweets 1/, 2/ etc. Each tweet under 280 chars.',
       linkedin: 'a LinkedIn post. Hook opening, short paragraphs, bullet lessons, closing question. 400-600 words.',
@@ -46,22 +44,69 @@ Adapt the format, length, and style completely for ${toPlatform}.
 Sound natural, not like a direct copy.
 Return only the repurposed post, no explanation.`
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.8,
-        max_tokens: 2048,
+    const generateWithOpenRouter = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY!}`,
+          'HTTP-Referer': 'https://postbrain-eight.vercel.app',
+          'X-Title': 'PostBrain'
+        },
+        body: JSON.stringify({
+          model: 'qwen/qwen3-next-80b-a3b-instruct:free',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
       })
-    })
+      if (!response.ok) throw new Error(`OpenRouter error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from OpenRouter')
+      return content
+    }
 
-    const data = await response.json()
-    const repurposed = data.choices?.[0]?.message?.content
+    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
+      })
+      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from Groq')
+      return content
+    }
+
+    let repurposed: string
+
+    try {
+      repurposed = await generateWithOpenRouter('', prompt)
+    } catch (openRouterError) {
+      console.warn('OpenRouter failed, falling back to Groq:', openRouterError)
+      try {
+        repurposed = await generateWithGroq('', prompt)
+      } catch {
+        console.error('Both providers failed')
+        return NextResponse.json({ error: 'Failed to repurpose' }, { status: 500 })
+      }
+    }
 
     return NextResponse.json({ content: repurposed })
   } catch {
