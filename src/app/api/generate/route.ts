@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, voice, writingMode, swipeInspiration, clarification } = await req.json()
+  const { idea, platform, writingMode, swipeInspiration, clarification } = await req.json()
   console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
@@ -44,118 +44,74 @@ export async function POST(req: Request) {
     avoid?: string
   } | null
 
-  const platformInstructions: Record<string, string> = {
-    twitter: `Write an 8-10 tweet X/Twitter thread.
-- Tweet 1: Strong hook that stops the scroll
-- Tweets 2-8: Story, insights, specific details
-- Final tweet: Strong closer or question
-- Each tweet under 280 characters
-- Number tweets: 1/, 2/, etc.
-- NO emojis
-- NO hashtags whatsoever
-- NO "RT if you agree" or engagement bait`,
-    linkedin: `Write a LinkedIn post.
-- Opening hook (2 lines max, no fluff)
-- 2-3 short punchy paragraphs
-- Maybe 3-5 bullet points if needed
-- Closing question or statement
-- 300-500 words max
-- NO hashtags whatsoever
-- NO "Let me know in the comments"
-- NO corporate speak`,
-    instagram: `Write an Instagram caption.
-- First 2 lines are the hook (before "more")
-- Short punchy paragraphs
-- Casual, real, personal
-- End with one genuine question
-- NO hashtags whatsoever
-- NO emoji spam`,
-    facebook: `Write a Facebook post.
-- Opening line that stops the scroll
-- 2-3 short conversational paragraphs
-- Warm, personal, community feel
-- End with a genuine question
-- 150-300 words
-- NO hashtags whatsoever`,
+  const platformRules: Record<string, string> = {
+    twitter: 'For X Thread: Start with hook tweet (1-2 sentences max), break into 5-8 tweets, each tweet = 1-3 sentences, use line breaks for emphasis, end with summary. NO hashtags.',
+    linkedin: 'For LinkedIn: 1,300-2,000 characters, conversational not corporate, single-line paragraphs for emphasis, optional engagement question at end. NO hashtags.',
+    instagram: 'For Instagram: Line breaks for readability, visual/emotional language, emojis only if fits voice, 2-3 sentence paragraphs, questions to drive comments. NO hashtags.',
+    facebook: 'For Facebook: 500-1,000 words, story-driven with setup/middle/end, personal and vulnerable, conversational. NO hashtags. Write in flowing paragraphs NOT a thread.',
   }
 
-  const systemPrompt = `You are writing AS ${profile?.display_name || 'this person'}.
-You ARE them. First person. Their exact voice.
-
-WHO THEY ARE:
-${profile?.role || 'Creator'} building ${profile?.project_description || 'something'}
-They write about: ${(profile?.content_topics || []).join(', ')}
-Their style: ${profile?.voice_style || voice?.style || 'conversational'}
-
-${voiceDNA ? `THEIR VOICE:
-${voiceDNA.style_summary}
-Sentence style: ${voiceDNA.sentence_patterns}
-Tone: ${voiceDNA.tone}
-They open posts like: ${voiceDNA.opening_style || 'directly'}
-They close posts like: ${voiceDNA.closing_style || 'with a thought'}
-Unique to them: ${(voiceDNA.unique_traits || []).join(', ')}
-NEVER do this: ${voiceDNA.avoid}` : ''}
-
-${profile?.voice_examples?.length
-    ? `THIS IS EXACTLY HOW THEY WRITE — COPY THIS STYLE:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
-    : voice?.examples
-    ? `THIS IS EXACTLY HOW THEY WRITE — COPY THIS STYLE:\n${voice.examples}`
-    : ''}
-
-HARD RULES — NEVER BREAK THESE:
-- Zero hashtags. Not one. Ever.
-- Zero emojis unless they used them in their examples above
-- Never use: brethren, folks, guys, synergy, leverage, utilize, game-changer, dive in, excited to share, in conclusion, at the end of the day, touch base, circle back, bandwidth
-- Never repeat the same word more than twice in the entire post
-- Never start two consecutive sentences the same way
-- Never sound like AI wrote it
-- Never be preachy or lecture-y
-- Write with specific details not vague generalities
-- Vary sentence length dramatically — short. Then longer and more complex.
-- Sound like a real human being having a conversation`
+  const voiceContext = profile?.voice_examples?.length
+    ? `USER'S VOICE - match this writing style EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
+    : ''
 
   const structureInstructions = swipeInspiration ? `
-IMPORTANT — Use this proven viral structure:
+STRUCTURE TO USE:
 Hook type: ${swipeInspiration.hook_type}
-Structure pattern: ${swipeInspiration.structure_notes || 'Follow the hook type pattern'}
-Emotional trigger to use: ${swipeInspiration.emotional_trigger || 'curiosity'}
-
-Reference post (USE THE STRUCTURE, NOT THE CONTENT):
-"${(swipeInspiration.content || '').slice(0, 300)}..."
-
-Apply this exact structural pattern to the user's idea.
-Make it sound like the user, not the reference post.
+Pattern: ${swipeInspiration.structure_notes || 'Follow the hook type pattern'}
+Emotional trigger: ${swipeInspiration.emotional_trigger || 'curiosity'}
+Reference (USE STRUCTURE ONLY, NOT CONTENT): "${(swipeInspiration.content || '').slice(0, 300)}..."
 ` : ''
 
-const clarificationContext = clarification ? `
-WHAT THEY WANT TO SAY:
-Main point: ${clarification.mainPoint}
-Tone: ${clarification.tone}
-${clarification.story ? `Personal story/example to use: ${clarification.story}` : ''}
+  const systemPrompt = `You are helping write a social media post in the user's authentic voice.
 
-Use the main point as the core message.
-Match the ${clarification.tone} tone throughout.
-${clarification.story ? 'Weave the personal story/example naturally into the post.' : ''}
-` : ''
+${voiceContext}
 
-  const modeInstructions: Record<string, string> = {
-    'from hook': "The user has written their opening hook. Build the rest of the post around it. Use the hook as tweet 1 or opening line verbatim.",
-    'from experience': "The user has shared a personal experience. Find the insight or lesson in it and build a post around the story.",
-    'from idea': "The user has an idea they want to explore. Develop it into a full post."
-  }
+${voiceDNA ? `VOICE ANALYSIS:
+Style: ${voiceDNA.style_summary}
+Sentence patterns: ${voiceDNA.sentence_patterns}
+Tone: ${voiceDNA.tone}
+Opens like: ${voiceDNA.opening_style}
+Closes like: ${voiceDNA.closing_style}
+Unique traits: ${(voiceDNA.unique_traits || []).join(', ')}
+AVOID: ${voiceDNA.avoid}` : ''}
 
-const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
+USER'S IDEA:
+Topic: ${idea}
+Write mode: ${writingMode || 'from idea'}
+${clarification?.mainPoint ? `Main point: ${clarification.mainPoint}` : ''}
+${clarification?.tone ? `Tone: ${clarification.tone}` : ''}
+${clarification?.story ? `Personal story/example to use: ${clarification.story}` : ''}
+
+PLATFORM: ${platform}
 
 ${structureInstructions}
 
-${clarificationContext}
-INSTRUCTION BASED ON WRITE MODE:
-${modeInstructions[writingMode as string] || modeInstructions['from idea']}
+CRITICAL RULES:
+1. Write in their voice - match vocabulary, rhythm, tone from samples
+2. DO NOT force business mentions unless idea is explicitly about it
+3. Be specific - use real numbers, names, concrete details from their story
+4. Sound human - like texting a friend, not writing an essay
+5. Keep their personality and quirks
+6. ZERO hashtags
+7. ZERO corporate buzzwords
+8. If they gave a personal story, USE IT - be specific, include names if mentioned
+9. DO NOT write a numbered thread for Facebook - write flowing paragraphs
 
-The input to write about:
-"${idea}"
+${platformRules[platform] || ''}
 
-Write the complete post now. Return only the post content, no explanation.`
+Generate 2 genuinely different variations. Return ONLY valid JSON:
+{
+  "variation1": "full post text",
+  "variation2": "full post text"
+}`
+
+  const userPrompt = `Generate 2 genuinely different variations of this post.
+Return ONLY valid JSON:
+{
+  "variation1": "full post text here",
+  "variation2": "full post text here"
+}`
 
   async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -201,16 +157,16 @@ Write the complete post now. Return only the post content, no explanation.`
     return content
   }
 
-  let content: string
+  let rawContent: string
   let provider = 'groq'
 
   try {
-    content = await generateWithGroq(systemPrompt, userPrompt)
+    rawContent = await generateWithGroq(systemPrompt, userPrompt)
   } catch (groqError) {
     console.warn('Groq failed, falling back to Gemini:', groqError)
     provider = 'gemini'
     try {
-      content = await generateWithGemini(systemPrompt, userPrompt)
+      rawContent = await generateWithGemini(systemPrompt, userPrompt)
     } catch {
       console.error('Both providers failed')
       return NextResponse.json(
@@ -220,13 +176,21 @@ Write the complete post now. Return only the post content, no explanation.`
     }
   }
 
+  let result: { variation1: string; variation2: string }
+  try {
+    const clean = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    result = JSON.parse(clean)
+  } catch {
+    result = { variation1: rawContent, variation2: '' }
+  }
+
   await supabase.from('generated_posts').insert({
     user_id: user.id,
     original_idea: idea,
-    generated_text: content,
+    generated_text: result.variation1,
     platform,
     status: 'draft',
   })
 
-  return NextResponse.json({ content, provider })
+  return NextResponse.json({ variation1: result.variation1, variation2: result.variation2, provider })
 }

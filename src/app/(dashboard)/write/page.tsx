@@ -97,6 +97,9 @@ export default function WritePage() {
   // Generation
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState<string | null>(null)
+  const [variation1, setVariation1] = useState('')
+  const [variation2, setVariation2] = useState('')
+  const [selectedVariation, setSelectedVariation] = useState<1 | 2>(1)
   const [generationProvider, setGenerationProvider] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -207,6 +210,9 @@ export default function WritePage() {
     if (!activeIdea || generating) return
     setGenerating(true)
     setGenerated(null)
+    setVariation1('')
+    setVariation2('')
+    setSelectedVariation(1)
     setError(null)
     setSavedToLibrary(false)
     setMobileTab('output')
@@ -235,7 +241,10 @@ export default function WritePage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
-      setGenerated(data.content)
+      setVariation1(data.variation1 || '')
+      setVariation2(data.variation2 || '')
+      setGenerated(data.variation1 || '')
+      setSelectedVariation(1)
       setGenerationProvider(data.provider || 'groq')
 
       setTimeout(() => {
@@ -654,6 +663,30 @@ export default function WritePage() {
                   {wordCount(generated)} words · {generated.length} chars
                 </span>
               </div>
+
+              {/* Version A / B tabs */}
+              {variation2 && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => { setSelectedVariation(1); setGenerated(variation1) }}
+                    className={clsx(
+                      'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                      selectedVariation === 1 ? 'bg-[#4F46E5] text-white' : 'text-[#6B6560]'
+                    )}
+                  >
+                    Version A
+                  </button>
+                  <button
+                    onClick={() => { setSelectedVariation(2); setGenerated(variation2) }}
+                    className={clsx(
+                      'px-3 py-1 rounded-lg text-xs font-medium transition-colors',
+                      selectedVariation === 2 ? 'bg-[#4F46E5] text-white' : 'text-[#6B6560]'
+                    )}
+                  >
+                    Version B
+                  </button>
+                </div>
+              )}
 
               {/* Content */}
               <div className="bg-surface border border-border rounded-card p-6">
