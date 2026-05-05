@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { idea, platform, swipeInspiration, clarification } = await req.json()
+  const { idea, platform, swipeInspiration, clarification, writingMode } = await req.json()
   console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
@@ -86,15 +86,48 @@ export async function POST(req: Request) {
   }
 
   const styleDescriptions: Record<string, string> = {
-    conversational: 'casual and direct, like texting a smart friend — short sentences, real talk, no fluff',
-    professional: 'polished but personal — credible without being corporate, clear and confident',
-    bold: 'strong opinions, no hedging, punchy and direct — says what most people think but won\'t say',
-    educational: 'breaks things down, uses analogies, makes complex ideas feel simple and accessible',
+    conversational: 'casual and direct, like texting a smart friend',
+    professional: 'professional but personal, credible without being corporate',
+    bold: 'bold, strong opinions, no hedging, provocative',
+    educational: 'educational, breaks things down, makes complex things simple',
   }
 
-  const voiceContext = profile?.voice_examples?.length
-    ? `USER'S WRITING SAMPLES — match this style exactly:\n${(profile.voice_examples as string[]).join('\n\n---\n\n')}`
-    : ''
+  const systemPrompt = `You are a world-class social media ghostwriter.
+You write posts that stop people mid-scroll.
+
+Your writing principles:
+- SPECIFIC > GENERIC: Real names, real numbers, real moments
+- STORY > LECTURE: Show a scene, don't explain a concept
+- CONTRAST > STATEMENT: Show two people, two outcomes, two paths
+- SHORT > LONG sentences on average. Vary dramatically.
+- DIRECT > HEDGED: Say the thing. Don't qualify everything.
+- HUMAN > POLISHED: Messy is fine. Perfect is suspicious.
+
+WHO YOU ARE WRITING FOR:
+Name: ${profile?.display_name || 'A creator'}
+Role: ${profile?.role || 'Creator'}
+Building: ${profile?.project_description || 'their work'}
+${profile?.unique_angle ? `Unique angle: ${profile.unique_angle}` : ''}
+Topics: ${(profile?.content_topics || []).join(', ')}
+Style: ${styleDescriptions[profile?.voice_style || 'conversational']}
+
+${voiceDNA ? `THEIR VOICE:
+${voiceDNA.style_summary}
+Patterns: ${voiceDNA.sentence_patterns}
+Tone: ${voiceDNA.tone}
+NEVER: ${voiceDNA.avoid}` : ''}
+
+${profile?.voice_examples?.length ? `THEIR WRITING — STUDY AND MATCH:
+${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}` : ''}
+
+ABSOLUTE RULES:
+- Zero hashtags
+- Zero: "I've been thinking", "I want to share", "Let me tell you"
+- Zero: brethren, synergy, leverage, game-changer, touch base
+- Never repeat a key phrase more than twice in one post
+- Never sound like AI wrote it
+- Do NOT force mentions of their project unless it fits naturally
+- Stay within their stated content topics only`
 
   const structureInstructions = swipeInspiration ? `
 STRUCTURE TO USE:
@@ -104,54 +137,37 @@ Emotional trigger: ${swipeInspiration.emotional_trigger || 'curiosity'}
 Reference (USE STRUCTURE ONLY, NOT CONTENT): "${(swipeInspiration.content || '').slice(0, 300)}..."
 ` : ''
 
-  const systemPrompt = `You are a ghostwriter. Write in the user's exact voice. Do not sound like AI.
+  const clarificationContext = clarification ? `
+WHAT THEY WANT TO SAY: ${clarification.mainPoint}
+TONE: ${clarification.tone}
+${clarification.story ? `PERSONAL STORY/EXPERIENCE:
+${clarification.story}
 
-${voiceContext}
+Use this story as the backbone. Be specific. 
+If they named people, use those names.
+If they mentioned numbers or places, use them.` : ''}` : ''
 
-${voiceDNA ? `VOICE PROFILE:
-Summary: ${voiceDNA.style_summary}
-Sentence style: ${voiceDNA.sentence_patterns}
-Tone: ${voiceDNA.tone}
-How they open: ${voiceDNA.opening_style}
-How they close: ${voiceDNA.closing_style}
-Unique traits: ${(voiceDNA.unique_traits || []).join(', ')}
-Signature phrases: ${(voiceDNA.signature_phrases || []).join(', ')}
-NEVER do: ${voiceDNA.avoid}` : `Writing style: ${styleDescriptions[profile?.voice_style || 'conversational']}`}
+  const userPrompt = `${platformRules[platform] || platformRules.facebook}
 
-${profile?.unique_angle ? `THEIR UNIQUE ANGLE / PERSPECTIVE:\n${profile.unique_angle}` : ''}
-
-WHO THEY ARE:
-${profile?.display_name ? `Name: ${profile.display_name}` : ''}
-${profile?.role ? `Role: ${profile.role}` : ''}
-${profile?.project_description ? `Building: ${profile.project_description}` : ''}
-
-THE POST:
-Idea: ${idea}
-${clarification?.mainPoint ? `Core message: ${clarification.mainPoint}` : ''}
-${clarification?.tone ? `Tone for this post: ${clarification.tone}` : ''}
-${clarification?.story ? `Personal story/example: ${clarification.story}` : ''}
+IDEA: ${idea}
+WRITE MODE: ${writingMode}
+${clarificationContext}
 
 ${structureInstructions}
 
-RULES:
-- Write in their voice — match vocabulary, rhythm, sentence length from samples
-- Use their unique angle and perspective if relevant
-- No hashtags. No corporate buzzwords. No "In today's world..."
-- Be specific: real numbers, names, concrete details
-- Sound human. Like they wrote it themselves.
-- If a personal story was given, use it — be specific
-- For Facebook: flowing paragraphs only, no numbered lists or threads
+STRUCTURAL APPROACHES TO CONSIDER:
+- Two people, same tool/situation, different outcomes (contrast)
+- Before vs After (transformation story)  
+- The thing everyone believes vs the truth (contrarian)
+- A specific moment that reveals a bigger truth (scene-setting)
+- A question that reframes how people think about something
 
-${platformRules[platform] || ''}
+Pick the structure that best fits this idea and story.
+Write as ${profile?.display_name || 'this person'}.
 
-Write 2 genuinely different versions. Different angles, different hooks, different structure — not just rewording.
-Return ONLY valid JSON:
-{
-  "variation1": "full post text",
-  "variation2": "full post text"
-}`
+Generate 2 genuinely different variations — different structures, 
+different openings, same core idea.
 
-  const userPrompt = `Generate 2 genuinely different variations of this post.
 Return ONLY valid JSON:
 {
   "variation1": "full post text here",
