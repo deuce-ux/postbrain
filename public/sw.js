@@ -32,9 +32,11 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and API requests
+  // Skip non-GET and auth-sensitive requests
   if (event.request.method !== 'GET') return
   if (event.request.url.includes('/api/')) return
+  if (event.request.url.includes('supabase')) return
+  if (event.request.url.includes('auth')) return
 
   event.respondWith(
     fetch(event.request)

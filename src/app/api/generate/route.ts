@@ -45,71 +45,73 @@ export async function POST(req: Request) {
 
   const platformInstructions: Record<string, string> = {
     twitter: `Write an 8-10 tweet X/Twitter thread.
-- Tweet 1: Strong hook
+- Tweet 1: Strong hook that stops the scroll
 - Tweets 2-8: Story, insights, specific details
 - Final tweet: Strong closer or question
 - Each tweet under 280 characters
 - Number tweets: 1/, 2/, etc.
-- Max 1-2 emojis per tweet
-- No hashtags`,
+- NO emojis
+- NO hashtags whatsoever
+- NO "RT if you agree" or engagement bait`,
     linkedin: `Write a LinkedIn post.
-- Opening hook (2 lines max)
-- 2-3 short story paragraphs
-- 3-5 bullet point lessons
-- Closing question or CTA
-- 400-600 words
-- Professional but personal tone
-- 3-5 hashtags at the end only`,
+- Opening hook (2 lines max, no fluff)
+- 2-3 short punchy paragraphs
+- Maybe 3-5 bullet points if needed
+- Closing question or statement
+- 300-500 words max
+- NO hashtags whatsoever
+- NO "Let me know in the comments"
+- NO corporate speak`,
     instagram: `Write an Instagram caption.
 - First 2 lines are the hook (before "more")
 - Short punchy paragraphs
-- Casual, friend-talking-to-friend energy
-- End with an engaging question
-- 5-7 hashtags on last line`,
+- Casual, real, personal
+- End with one genuine question
+- NO hashtags whatsoever
+- NO emoji spam`,
     facebook: `Write a Facebook post.
-- Opening hook that stops the scroll
+- Opening line that stops the scroll
 - 2-3 short conversational paragraphs
-- Personal, warm, community-oriented tone
-- End with a question to drive comments
+- Warm, personal, community feel
+- End with a genuine question
 - 150-300 words
-- 2-3 relevant hashtags at the end
-- Emojis used naturally, not excessively`,
+- NO hashtags whatsoever`,
   }
 
-  const systemPrompt = `You are a ghostwriter for ${profile?.display_name || 'a creator'}.
+  const systemPrompt = `You are writing AS ${profile?.display_name || 'this person'}.
+You ARE them. First person. Their exact voice.
 
-THEIR PROFILE:
-- Name: ${profile?.display_name || 'Creator'}
-- Role: ${profile?.role || 'Creator'}
-- Building: ${profile?.project_description || 'their work'}
-- Topics: ${(profile?.content_topics || []).join(', ')}
-- Style: ${profile?.voice_style || voice?.style || 'conversational'}
+WHO THEY ARE:
+${profile?.role || 'Creator'} building ${profile?.project_description || 'something'}
+They write about: ${(profile?.content_topics || []).join(', ')}
+Their style: ${profile?.voice_style || voice?.style || 'conversational'}
 
-${voiceDNA ? `THEIR VOICE ANALYSIS:
-- ${voiceDNA.style_summary}
-- Sentence patterns: ${voiceDNA.sentence_patterns}
-- Tone: ${voiceDNA.tone}
-- How they open posts: ${voiceDNA.opening_style || 'varies'}
-- How they close posts: ${voiceDNA.closing_style || 'varies'}
-- Unique traits: ${(voiceDNA.unique_traits || []).join(', ')}
-- AVOID: ${voiceDNA.avoid}` : ''}
+${voiceDNA ? `THEIR VOICE:
+${voiceDNA.style_summary}
+Sentence style: ${voiceDNA.sentence_patterns}
+Tone: ${voiceDNA.tone}
+They open posts like: ${voiceDNA.opening_style || 'directly'}
+They close posts like: ${voiceDNA.closing_style || 'with a thought'}
+Unique to them: ${(voiceDNA.unique_traits || []).join(', ')}
+NEVER do this: ${voiceDNA.avoid}` : ''}
 
 ${profile?.voice_examples?.length
-    ? `THEIR ACTUAL WRITING — MATCH THIS STYLE EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
+    ? `THIS IS EXACTLY HOW THEY WRITE — COPY THIS STYLE:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
     : voice?.examples
-    ? `THEIR ACTUAL WRITING — MATCH THIS STYLE EXACTLY:\n${voice.examples}`
+    ? `THIS IS EXACTLY HOW THEY WRITE — COPY THIS STYLE:\n${voice.examples}`
     : ''}
 
-STRICT RULES:
-- NEVER repeat the same word more than twice in a post
-- NEVER use: "brethren", "folks", "guys", "excited to share", "dive in", "game-changer", "leverage", "utilize", "synergy", "in conclusion", "to summarize", "at the end of the day"
-- NEVER start consecutive sentences the same way
-- Write like a real person texting a smart friend
-- Use specific details, not vague generalities
-- Vary sentence length — mix short punchy sentences with longer ones
-- Sound fresh every time — no repetitive structures
-- First person always
-- NO hashtags unless platform requires them`
+HARD RULES — NEVER BREAK THESE:
+- Zero hashtags. Not one. Ever.
+- Zero emojis unless they used them in their examples above
+- Never use: brethren, folks, guys, synergy, leverage, utilize, game-changer, dive in, excited to share, in conclusion, at the end of the day, touch base, circle back, bandwidth
+- Never repeat the same word more than twice in the entire post
+- Never start two consecutive sentences the same way
+- Never sound like AI wrote it
+- Never be preachy or lecture-y
+- Write with specific details not vague generalities
+- Vary sentence length dramatically — short. Then longer and more complex.
+- Sound like a real human being having a conversation`
 
   const structureInstructions = swipeInspiration ? `
 IMPORTANT — Use this proven viral structure:
