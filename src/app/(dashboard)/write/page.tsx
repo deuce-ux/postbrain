@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { VoiceInput } from '@/components/VoiceInput'
 import { clsx } from 'clsx'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -362,15 +363,21 @@ export default function WritePage() {
               <label className="label">
                 {writeMode === 'from hook' ? 'YOUR HOOK' : writeMode === 'from experience' ? 'YOUR EXPERIENCE' : 'YOUR IDEA'}
               </label>
-              {fromIdeaBank && (
-                <button
-                  onClick={() => { setFromIdeaBank(false); setIdea('') }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-light text-accent text-xs font-medium hover:bg-accent/20 transition-colors"
-                >
-                  From Idea Bank <X className="h-3 w-3" />
-                </button>
+              {(writeMode === 'from experience' || writeMode === 'from hook') && (
+                <VoiceInput 
+                  onTranscript={(text) => setIdea(text)}
+                  existingText={idea}
+                />
               )}
             </div>
+            {fromIdeaBank && (
+              <button
+                onClick={() => { setFromIdeaBank(false); setIdea('') }}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent-light text-accent text-xs font-medium hover:bg-accent/20 transition-colors mb-2"
+              >
+                From Idea Bank <X className="h-3 w-3" />
+              </button>
+            )}
             <textarea
               ref={textareaRef}
               value={idea}

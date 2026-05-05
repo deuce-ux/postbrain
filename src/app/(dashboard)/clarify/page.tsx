@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { VoiceInput } from '@/components/VoiceInput'
 import { clsx } from 'clsx'
 
 const TONE_OPTIONS = [
@@ -193,7 +194,16 @@ export default function ClarifyPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="label">Any specific example or story? (Optional)</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-[#1A1714]">
+                Any specific example or story? 
+                <span className="text-[#6B6560] font-normal"> (Optional)</span>
+              </label>
+              <VoiceInput 
+                onTranscript={(text) => setStory(text)}
+                existingText={story}
+              />
+            </div>
             <textarea
               value={story}
               onChange={(e) => setStory(e.target.value)}

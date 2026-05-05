@@ -7,6 +7,7 @@ import { useIdeas, type Idea } from '@/hooks/useIdeas'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { VoiceInput } from '@/components/VoiceInput'
 import { clsx } from 'clsx'
 
 type StatusFilter = 'all' | 'raw' | 'ready' | 'used'
@@ -214,11 +215,17 @@ export default function IdeasPage() {
               <kbd className="px-1 py-0.5 rounded bg-border text-text-secondary font-mono">↵</kbd>
               {' to save'}
             </p>
-            {content.trim().length > 0 && (
-              <Button onClick={handleSave} loading={saving}>
-                Save idea
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <VoiceInput
+                onTranscript={(text) => setContent(text)}
+                existingText={content}
+              />
+              {content.trim().length > 0 && (
+                <Button onClick={handleSave} loading={saving}>
+                  Save idea
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
