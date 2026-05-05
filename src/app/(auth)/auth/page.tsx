@@ -21,7 +21,7 @@ export default function AuthPage() {
     setError('')
     setLoading(true)
 
-    const { error } =
+    const { data, error } =
       tab === 'signin'
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ 
@@ -37,6 +37,9 @@ export default function AuthPage() {
     if (error) {
       setError(error.message)
     } else {
+      if (data?.session) {
+        await supabase.auth.setSession(data.session)
+      }
       router.push('/dashboard')
       router.refresh()
     }

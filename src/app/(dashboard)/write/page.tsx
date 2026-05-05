@@ -194,6 +194,11 @@ export default function WritePage() {
     setGenerated(null)
     setError(null)
     setSavedToLibrary(false)
+    showToast('Writing your post...')
+
+    document.getElementById('output-panel')?.scrollIntoView({ 
+      behavior: 'smooth' 
+    })
 
     try {
       const res = await fetch('/api/generate', {
@@ -205,12 +210,18 @@ export default function WritePage() {
       if (!res.ok) throw new Error(data.error || 'Generation failed')
       setGenerated(data.content)
       setGenerationProvider(data.provider || 'groq')
+
+      setTimeout(() => {
+        document.getElementById('output-panel')?.scrollIntoView({ 
+          behavior: 'smooth' 
+        })
+      }, 100)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setGenerating(false)
     }
-  }, [idea, platform, voice, writeMode, generating, swipeInspiration])
+  }, [idea, platform, voice, writeMode, generating, swipeInspiration, showToast])
 
   // ── Copy ─────────────────────────────────────────────────────────────────
 
@@ -237,7 +248,7 @@ export default function WritePage() {
     <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] gap-0 -m-4 md:-m-5 lg:-m-6 animate-fade-in md:px-4 md:py-2">
 
       {/* ── Left panel: Controls ── */}
-      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto">
+      <div className="w-full md:w-[480px] shrink-0 border-b md:border-b-0 md:border-r border-border bg-[#FAFAF9] overflow-y-auto pb-28 md:pb-0">
         <div className="p-4 space-y-5 bg-white rounded-xl border border-[#E8E5E0] m-4">
 
           <div>
@@ -450,7 +461,7 @@ export default function WritePage() {
       </div>
 
       {/* ── Right panel: Output ── */}
-      <div className="flex-1 overflow-y-auto bg-background relative">
+      <div id="output-panel" className="flex-1 overflow-y-auto bg-background relative">
         <div className="p-8 h-full flex flex-col">
 
           {/* Empty state */}
@@ -697,7 +708,7 @@ export default function WritePage() {
 
         {/* Toast */}
         {toast && (
-          <div className="fixed bottom-6 right-6 bg-text-primary text-white text-sm px-4 py-2.5 rounded-button shadow-card-elevated animate-slide-up z-50">
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 md:top-auto md:left-auto md:translate-x-0 md:bottom-6 md:right-6 bg-text-primary text-white text-sm px-4 py-2.5 rounded-button shadow-card-elevated animate-slide-up z-50">
             {toast}
           </div>
         )}
