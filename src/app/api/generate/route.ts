@@ -36,6 +36,9 @@ export async function POST(req: Request) {
     style_summary?: string
     sentence_patterns?: string
     tone?: string
+    opening_style?: string
+    closing_style?: string
+    unique_traits?: string[]
     signature_phrases?: string[]
     avoid?: string
   } | null
@@ -73,30 +76,40 @@ export async function POST(req: Request) {
 - Emojis used naturally, not excessively`,
   }
 
-  const systemPrompt = `You are a social media ghostwriter for ${profile?.display_name || 'a creator'}.
+  const systemPrompt = `You are a ghostwriter for ${profile?.display_name || 'a creator'}.
 
-Their profile:
+THEIR PROFILE:
+- Name: ${profile?.display_name || 'Creator'}
 - Role: ${profile?.role || 'Creator'}
 - Building: ${profile?.project_description || 'their work'}
-- Topics they write about: ${(profile?.content_topics || []).join(', ') || 'various topics'}
-- Writing style: ${profile?.voice_style || voice?.style || 'conversational'}
+- Topics: ${(profile?.content_topics || []).join(', ')}
+- Style: ${profile?.voice_style || voice?.style || 'conversational'}
 
-${voiceDNA ? `Their voice analysis:
-- Style: ${voiceDNA.style_summary}
+${voiceDNA ? `THEIR VOICE ANALYSIS:
+- ${voiceDNA.style_summary}
 - Sentence patterns: ${voiceDNA.sentence_patterns}
 - Tone: ${voiceDNA.tone}
-- Signature phrases: ${(voiceDNA.signature_phrases || []).join(', ')}
-- Avoid: ${voiceDNA.avoid}` : ''}
+- How they open posts: ${voiceDNA.opening_style || 'varies'}
+- How they close posts: ${voiceDNA.closing_style || 'varies'}
+- Unique traits: ${(voiceDNA.unique_traits || []).join(', ')}
+- AVOID: ${voiceDNA.avoid}` : ''}
 
 ${profile?.voice_examples?.length
-    ? `MATCH THIS WRITING STYLE EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 3).join('\n---\n')}`
+    ? `THEIR ACTUAL WRITING — MATCH THIS STYLE EXACTLY:\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
     : voice?.examples
-    ? `MATCH THIS WRITING STYLE EXACTLY:\n${voice.examples}`
+    ? `THEIR ACTUAL WRITING — MATCH THIS STYLE EXACTLY:\n${voice.examples}`
     : ''}
 
-Write in first person as this exact person.
-Sound like a real human, not AI.
-AVOID: "excited to share", buzzwords, generic advice.`
+STRICT RULES:
+- NEVER repeat the same word more than twice in a post
+- NEVER use: "brethren", "folks", "guys", "excited to share", "dive in", "game-changer", "leverage", "utilize", "synergy", "in conclusion", "to summarize", "at the end of the day"
+- NEVER start consecutive sentences the same way
+- Write like a real person texting a smart friend
+- Use specific details, not vague generalities
+- Vary sentence length — mix short punchy sentences with longer ones
+- Sound fresh every time — no repetitive structures
+- First person always
+- NO hashtags unless platform requires them`
 
   const structureInstructions = swipeInspiration ? `
 IMPORTANT — Use this proven viral structure:
