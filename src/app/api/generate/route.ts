@@ -46,43 +46,61 @@ export async function POST(req: Request) {
 
   const platformRules: Record<string, string> = {
     twitter: `Platform: X/Twitter Thread
-- Start with a hook tweet — 1-2 sentences that stop the scroll
-- Break into 5-8 tweets. Each tweet = one clear thought.
-- Each tweet under 280 characters
-- Number them: 1/ 2/ 3/ etc.
-- End with a summary or question tweet
-- Let the story determine how many tweets you need
+- Hook tweet: 1-2 sentences. Stop the scroll.
+- Each tweet = one clear thought, 1-3 sentences max
+- Short punchy sentences. Vary length dramatically.
+- Number them: 1/ 2/ 3/
+- Each under 280 characters
+- 8-10 tweets minimum
 - NO hashtags`,
 
     linkedin: `Platform: LinkedIn
-- Open with a hook — one line that makes them stop scrolling
-- Write in short paragraphs with breathing room between them
-- Be conversational, not corporate
-- Use specific numbers and details from their story
-- Close with a genuine question or strong statement
-- Let the depth of the story determine the length
-- Minimum 300 words, no hard maximum — write until it's complete
-- NO hashtags`,
+FORMATTING RULES — FOLLOW EXACTLY:
+- Maximum 3 sentences per paragraph
+- After every key statement — add a line break
+- Let important lines stand alone like this.
+- Use single-sentence paragraphs for emphasis.
+- Short paragraphs. White space. Room to breathe.
+- 400-700 words
+- NO hashtags
+- NO bullet points unless they naturally fit
+
+STRUCTURE:
+- Line 1: Hook. One sentence. Make it land.
+- Body: Build the argument in short paragraphs
+- Key insight: Let it stand alone on its own line
+- Close: Question or strong final statement`,
 
     instagram: `Platform: Instagram
-- First 2 lines must be the hook — before the "more" cutoff
-- Short punchy paragraphs — 2-3 sentences each
-- Use line breaks generously for readability
-- Casual and personal — like talking to a friend
-- End with one genuine engaging question
+FORMATTING:
+- First 2 lines: Hook before the "more" cutoff
+- Very short paragraphs — 1-2 sentences each
+- Line breaks between every paragraph
+- Casual, personal, like talking to a friend
+- 200-350 words
 - NO hashtags`,
 
     facebook: `Platform: Facebook
-- Write in flowing paragraphs — NOT a list, NOT a thread, NOT numbered
-- Open with a scene, moment, or statement that pulls them in
-- Tell the story fully — setup, middle, resolution
-- Use real names and specific details from their story if provided
-- Include dialogue if it happened naturally
-- Close with the lesson and one question to spark comments
-- Let the story breathe — write as long as it needs to be
-- Minimum 400 words — Facebook readers expect depth
-- NO hashtags. NO bullet points. NO numbered lists.
-- This is storytelling, not a Twitter thread`,
+FORMATTING RULES — FOLLOW EXACTLY:
+- Short paragraphs. 2-3 sentences maximum per paragraph.
+- Add a line break between every single paragraph.
+- Key sentences stand alone on their own line.
+- Like this.
+- Then continue.
+- Write in scenes — set up a moment, develop it, resolve it
+- Use dialogue if the story has it: "He said, 'X'"
+- 500-800 words minimum
+- NO hashtags
+- NO numbered lists
+- NO bullet points
+- This is storytelling. Not a thread. Not an essay.
+
+STRUCTURE:
+- Opening: One scene or one bold statement
+- Development: Tell the story in short paragraphs
+- Contrast: Show two paths or two people if it fits
+- Insight: The lesson — let it breathe on its own line
+- Close: One question to drive comments`,
   }
 
   const styleDescriptions: Record<string, string> = {
@@ -174,7 +192,15 @@ LENGTH GUIDANCE:
 Do not cut the post short. Write until the idea is fully expressed.
 A post that ends too early is worse than one that runs long.
 
-Generate 2 genuinely different variations — different structures, 
+FORMATTING REMINDER:
+- Break paragraphs every 2-3 sentences
+- Let key statements stand alone on their own line
+- White space is not wasted space — it's emphasis
+- Write how a real person texts, not how an academic writes
+- Short sentences hit harder than long ones.
+- Like this.
+
+Generate 2 genuinely different variations — different structures,
 different openings, same core idea.
 
 Return ONLY valid JSON:
