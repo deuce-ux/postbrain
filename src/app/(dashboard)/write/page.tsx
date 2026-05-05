@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Hash, Briefcase, Camera, ChevronDown, ChevronUp,
   Copy, Check, RefreshCw, BookMarked, PenLine, X, Users,
@@ -22,6 +22,15 @@ type VoiceStyle = 'Conversational' | 'Professional' | 'Bold' | 'Educational'
 interface VoiceSettings {
   style: VoiceStyle
   examples: string
+}
+
+interface ClarificationData {
+  idea?: string
+  platform?: Platform
+  writeMode?: WriteMode
+  mainPoint: string
+  tone: string
+  story: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -133,6 +142,8 @@ export default function WritePage() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [clarificationData, setClarificationData] = useState<ClarificationData | null>(null)
 
   // ── On mount: read localStorage ──────────────────────────────────────────
 
@@ -188,11 +199,9 @@ export default function WritePage() {
 
   // ── Generate ──────────────────────────────────────────────────────────────
 
-  const handleGenerate = useCallback(async (clarification?: {
-    mainPoint: string
-    tone: string
-    story: string
-  }) => {
+  const handleGenerate = useCallback(async (clarificationOverride?: ClarificationData) => {
+    const activeClarification = clarificationOverride || clarificationData
+
     if (!idea.trim() || generating) return
     setGenerating(true)
     setGenerated(null)
@@ -215,7 +224,11 @@ export default function WritePage() {
           voice, 
           writingMode: writeMode, 
           swipeInspiration: swipeInspiration || null,
-          clarification: clarification || null
+          clarification: activeClarification ? {
+            mainPoint: activeClarification.mainPoint,
+            tone: activeClarification.tone,
+            story: activeClarification.story
+          } : null
         }),
       })
       const data = await res.json()
@@ -233,35 +246,36 @@ export default function WritePage() {
     } finally {
       setGenerating(false)
     }
-  }, [idea, platform, voice, writeMode, generating, swipeInspiration, showToast])
+  }, [idea, platform, voice, writeMode, generating, swipeInspiration, showToast, clarificationData])
 
   // ── Handle generate=true (from clarification) ─────────────────────────────
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('generate') === 'true') {
-      const clarificationStr = localStorage.getItem('clarification')
-      if (clarificationStr) {
+    if (searchParams.get('generate') === 'true') {
+      const saved = localStorage.getItem('clarification')
+      if (saved) {
         try {
-          const clarification = JSON.parse(clarificationStr)
+          const clarification = JSON.parse(saved)
           localStorage.removeItem('clarification')
-          if (clarification.idea) {
-            setIdea(clarification.idea)
-            setTimeout(() => {
-              handleGenerate({
-                mainPoint: clarification.mainPoint,
-                tone: clarification.tone,
-                story: clarification.story,
-              })
-            }, 100)
-          }
+          
+          if (clarification.idea) setIdea(clarification.idea)
+          if (clarification.platform) setPlatform(clarification.platform)
+          if (clarification.writeMode) setWriteMode(clarification.writeMode)
+          
+          setClarificationData(clarification)
+          setMobileTab('output')
+          
+          setTimeout(() => {
+            handleGenerate(clarification)
+          }, 500)
+          
+          window.history.replaceState({}, '', '/write')
         } catch (e) {
           console.error('Failed to parse clarification:', e)
         }
       }
-      window.history.replaceState({}, '', '/write')
     }
-  }, [handleGenerate])
+  }, [searchParams, handleGenerate])
 
   // ── Copy ─────────────────────────────────────────────────────────────────
 
@@ -314,6 +328,25 @@ export default function WritePage() {
 
           {/* Step 1: Idea */}
           <section className="space-y-2">
+            {clarificationData && (
+              <div className="bg-[#EEF2FF] border border-[#C7D2FE] rounded-lg p-3 mb-3">
+                <p className="text-xs text-[#4F46E5] font-medium mb-1">
+                  Clarified ✓
+                </p>
+                <p className="text-xs text-[#6B6560]">
+                  {clarificationData.mainPoint}
+                </p>
+                <p className="text-xs text-[#6B6560]">
+                  Tone: {clarificationData.tone}
+                </p>
+                <button 
+                  onClick={() => setClarificationData(null)}
+                  className="text-xs text-[#4F46E5] mt-1"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <label className="label">
                 {writeMode === 'from hook' ? 'YOUR HOOK' : writeMode === 'from experience' ? 'YOUR EXPERIENCE' : 'YOUR IDEA'}
