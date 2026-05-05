@@ -24,6 +24,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { idea, platform, voice, writingMode, swipeInspiration, clarification } = await req.json()
+  console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
   const { data: profile } = await supabase

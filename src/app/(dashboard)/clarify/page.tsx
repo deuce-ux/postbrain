@@ -36,12 +36,14 @@ export default function ClarifyPage() {
   const [target, setTarget] = useState<'write' | 'thread'>('write')
   const [generating, setGenerating] = useState(false)
   const [mode, setMode] = useState('from idea')
+  const [platform, setPlatform] = useState('')
 
   useEffect(() => {
     const storedIdea = localStorage.getItem('clarification_idea')
     const storedTarget = localStorage.getItem('clarification_target')
     const storedMode = localStorage.getItem('clarification_mode')
     const storedTakeaway = localStorage.getItem('clarification_takeaway')
+    const storedPlatform = localStorage.getItem('clarification_platform')
     if (storedIdea) {
       setIdea(storedIdea)
       localStorage.removeItem('clarification_idea')
@@ -53,6 +55,10 @@ export default function ClarifyPage() {
     if (storedMode) {
       setMode(storedMode)
       localStorage.removeItem('clarification_mode')
+    }
+    if (storedPlatform) {
+      setPlatform(storedPlatform)
+      localStorage.removeItem('clarification_platform')
     }
     if (storedTakeaway) {
       if (storedMode === 'from experience') {
@@ -66,7 +72,7 @@ export default function ClarifyPage() {
   }, [])
 
   const handleContinue = async () => {
-    if (!mainPoint.trim()) return
+    if (!mainPoint.trim() || !platform) return
 
     if (target === 'thread') {
       setGenerating(true)
@@ -76,7 +82,7 @@ export default function ClarifyPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             idea,
-            platform: 'twitter',
+            platform,
             voice: { style: 'Conversational', examples: '' },
             writingMode: 'from idea',
             swipeInspiration: null,
@@ -104,7 +110,7 @@ export default function ClarifyPage() {
       mainPoint: mainPoint.trim(),
       tone,
       story: story.trim(),
-      platform: 'twitter',
+      platform,
       writeMode: mode,
     }
 
@@ -200,7 +206,7 @@ export default function ClarifyPage() {
 
         <Button
           onClick={handleContinue}
-          disabled={!mainPoint.trim() || generating}
+          disabled={!mainPoint.trim() || generating || !platform}
           loading={generating}
           className="w-full"
           size="lg"

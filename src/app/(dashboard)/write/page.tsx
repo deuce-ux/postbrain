@@ -36,10 +36,10 @@ interface ClarificationData {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PLATFORMS: { id: Platform; label: string; Icon: React.ElementType }[] = [
-  { id: 'twitter', label: 'Twitter / X', Icon: Hash },
   { id: 'linkedin', label: 'LinkedIn', Icon: Briefcase },
-  { id: 'instagram', label: 'Instagram', Icon: Camera },
   { id: 'facebook', label: 'Facebook', Icon: Users },
+  { id: 'instagram', label: 'Instagram', Icon: Camera },
+  { id: 'twitter', label: 'Twitter / X', Icon: Hash },
 ]
 
 const WRITE_MODES: { id: WriteMode; label: string; description: string }[] = [
@@ -87,7 +87,7 @@ export default function WritePage() {
   const [fromIdeaBank, setFromIdeaBank] = useState(false)
 
   // Controls
-  const [platform, setPlatform] = useState<Platform>('twitter')
+  const [platform, setPlatform] = useState<Platform | ''>('')
   const [writeMode, setWriteMode] = useState<WriteMode>('from idea')
   const [voiceOpen, setVoiceOpen] = useState(false)
   const [voice, setVoice] = useState<VoiceSettings>(DEFAULT_VOICE)
@@ -265,6 +265,8 @@ export default function WritePage() {
           if (clarification.idea) setIdea(clarification.idea)
           if (clarification.platform) setPlatform(clarification.platform)
           if (clarification.writeMode) setWriteMode(clarification.writeMode)
+
+          console.log('Generating with platform:', clarification.platform)
 
           setClarificationData(clarification)
           setMobileTab('output')
@@ -568,12 +570,13 @@ export default function WritePage() {
 
           <Button
             onClick={() => {
-              if (!idea.trim()) return
+              if (!idea.trim() || !platform) return
               if (writeMode === 'from hook') {
                 handleGenerate()
               } else {
                 localStorage.setItem('clarification_idea', idea.trim())
                 localStorage.setItem('clarification_mode', writeMode)
+                localStorage.setItem('clarification_platform', platform)
                 if (writeMode === 'from experience') {
                   localStorage.setItem('clarification_takeaway', takeaway.trim())
                 }
@@ -581,11 +584,11 @@ export default function WritePage() {
               }
             }}
             loading={generating}
-            disabled={!idea.trim()}
-            className="w-full h-12 text-base"
+            disabled={!idea.trim() || !platform}
+            className={clsx("w-full h-12 text-base", (!idea.trim() || !platform) ? "bg-[#E8E5E0] text-[#6B6560] cursor-not-allowed hover:bg-[#E8E5E0]" : "bg-[#4F46E5] text-white cursor-pointer")}
             size="lg"
           >
-            {generating ? 'Writing…' : 'Generate Post'}
+            {!platform ? 'Select a platform first' : generating ? 'Writing…' : 'Generate Post'}
           </Button>
         </div>
       </div>
@@ -646,7 +649,7 @@ export default function WritePage() {
 
               {/* Platform + counts */}
               <div className="flex items-center gap-2">
-                <Badge variant="accent">{PLATFORM_BADGE_LABEL[platform]}</Badge>
+                <Badge variant="accent">{platform ? PLATFORM_BADGE_LABEL[platform] : 'Post'}</Badge>
                 <span className="text-xs text-text-secondary">
                   {wordCount(generated)} words · {generated.length} chars
                 </span>
