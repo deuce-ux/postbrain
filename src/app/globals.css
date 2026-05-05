@@ -8,9 +8,10 @@
     touch-action: manipulation;
   }
 
-  button, [role="button"] {
+  button, [role="button"], a {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
   
   body {

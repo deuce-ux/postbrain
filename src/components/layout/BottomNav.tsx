@@ -28,11 +28,11 @@ export function BottomNav() {
           <Link
             key={href}
             href={href}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 
-                       rounded-lg transition-colors ${
-                         active 
-                           ? 'text-[#4F46E5]' 
-                           : 'text-[#6B6560] hover:text-[#1A1714]'
+            className={`flex flex-col items-center gap-1 px-3 py-1.5
+                       rounded-lg active:scale-95 active:opacity-70 ${
+                         active
+                           ? 'text-[#4F46E5]'
+                           : 'text-[#6B6560]'
                        }`}
           >
             <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
