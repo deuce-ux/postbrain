@@ -104,6 +104,11 @@ export default function WritePage() {
   const [generationProvider, setGenerationProvider] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Refine
+  const [refineInstruction, setRefineInstruction] = useState('')
+  const [isRefining, setIsRefining] = useState(false)
+  const [refineHistory, setRefineHistory] = useState<string[]>([])
+
   // Post-generation actions
   const [copied, setCopied] = useState(false)
   const [savedToLibrary, setSavedToLibrary] = useState(false)
@@ -306,6 +311,46 @@ export default function WritePage() {
     // Generate already auto-saves to DB; this just confirms it to the user
     setSavedToLibrary(true)
     showToast('Saved to library')
+  }
+
+  // ── Refine post ───────────────────────────────────────────────────────────
+
+  const handleRefine = async (instruction: string) => {
+    if (!instruction.trim() || !generated) return
+    
+    setIsRefining(true)
+    
+    // Save current version to history before refining
+    setRefineHistory(prev => [...prev, generated])
+    
+    try {
+      const response = await fetch('/api/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: generated,
+          instruction: instruction.trim(),
+          platform
+        })
+      })
+      
+      if (!response.ok) throw new Error('Refinement failed')
+      
+      const data = await response.json()
+      
+      if (selectedVariation === 1) {
+        setVariation1(data.content)
+      } else {
+        setVariation2(data.content)
+      }
+      
+      setGenerated(data.content)
+      setRefineInstruction('')
+    } catch (err) {
+      console.error('Refine error:', err)
+    } finally {
+      setIsRefining(false)
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -768,6 +813,82 @@ export default function WritePage() {
                   <RefreshCw className="h-3.5 w-3.5" /> Repurpose
                 </Button>
               </div>
+
+              {/* Refine this post */}
+              {generated && (
+                <div className="mt-4 border-t border-[#E8E5E0] pt-4">
+                  {/* Quick refine buttons */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <p className="text-xs text-[#6B6560] w-full mb-1">
+                      Refine this post:
+                    </p>
+                    {[
+                      'Make it shorter',
+                      'Make it punchier', 
+                      'Make it more personal',
+                      'Sharpen the opening',
+                      'Stronger ending',
+                      'More like my voice',
+                      'Remove any AI-sounding phrases',
+                      'Add more specific details',
+                    ].map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        onClick={() => handleRefine(suggestion)}
+                        disabled={isRefining}
+                        className="text-xs bg-[#F8F9FF] text-[#4F46E5] px-3 py-1.5 
+                                   rounded-full hover:bg-[#EEF2FF] transition-colors
+                                   disabled:opacity-50"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom refine input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={refineInstruction}
+                      onChange={(e) => setRefineInstruction(e.target.value)}
+                      placeholder="Or type your own instruction..."
+                      className="flex-1 text-sm border border-[#E8E5E0] rounded-lg 
+                                 px-3 py-2 focus:outline-none focus:border-[#4F46E5]"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && refineInstruction.trim()) {
+                          handleRefine(refineInstruction)
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => handleRefine(refineInstruction)}
+                      disabled={!refineInstruction.trim() || isRefining}
+                      className="bg-[#4F46E5] text-white text-xs px-4 py-2 
+                                 rounded-lg disabled:opacity-50"
+                    >
+                      {isRefining ? '...' : 'Refine'}
+                    </button>
+                  </div>
+
+                  {/* Undo button — show if there's history */}
+                  {refineHistory.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const previous = refineHistory[refineHistory.length - 1]
+                        if (previous) {
+                          if (selectedVariation === 1) setVariation1(previous)
+                          else setVariation2(previous)
+                          setGenerated(previous)
+                          setRefineHistory(prev => prev.slice(0, -1))
+                        }
+                      }}
+                      className="text-xs text-[#6B6560] mt-2 flex items-center gap-1"
+                    >
+                      ↩ Undo last refinement
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Tone Variations Panel */}
               {showVariations && (
