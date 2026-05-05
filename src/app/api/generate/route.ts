@@ -45,10 +45,44 @@ export async function POST(req: Request) {
   } | null
 
   const platformRules: Record<string, string> = {
-    twitter: 'For X Thread: Start with hook tweet (1-2 sentences max), break into 5-8 tweets, each tweet = 1-3 sentences, use line breaks for emphasis, end with summary. NO hashtags.',
-    linkedin: 'For LinkedIn: 1,300-2,000 characters, conversational not corporate, single-line paragraphs for emphasis, optional engagement question at end. NO hashtags.',
-    instagram: 'For Instagram: Line breaks for readability, visual/emotional language, emojis only if fits voice, 2-3 sentence paragraphs, questions to drive comments. NO hashtags.',
-    facebook: 'For Facebook: 500-1,000 words, story-driven with setup/middle/end, personal and vulnerable, conversational. NO hashtags. Write in flowing paragraphs NOT a thread.',
+    twitter: `Platform: X/Twitter Thread
+- Start with a hook tweet — 1-2 sentences that stop the scroll
+- Break into 5-8 tweets. Each tweet = one clear thought.
+- Each tweet under 280 characters
+- Number them: 1/ 2/ 3/ etc.
+- End with a summary or question tweet
+- Let the story determine how many tweets you need
+- NO hashtags`,
+
+    linkedin: `Platform: LinkedIn
+- Open with a hook — one line that makes them stop scrolling
+- Write in short paragraphs with breathing room between them
+- Be conversational, not corporate
+- Use specific numbers and details from their story
+- Close with a genuine question or strong statement
+- Let the depth of the story determine the length
+- Minimum 300 words, no hard maximum — write until it's complete
+- NO hashtags`,
+
+    instagram: `Platform: Instagram
+- First 2 lines must be the hook — before the "more" cutoff
+- Short punchy paragraphs — 2-3 sentences each
+- Use line breaks generously for readability
+- Casual and personal — like talking to a friend
+- End with one genuine engaging question
+- NO hashtags`,
+
+    facebook: `Platform: Facebook
+- Write in flowing paragraphs — NOT a list, NOT a thread, NOT numbered
+- Open with a scene, moment, or statement that pulls them in
+- Tell the story fully — setup, middle, resolution
+- Use real names and specific details from their story if provided
+- Include dialogue if it happened naturally
+- Close with the lesson and one question to spark comments
+- Let the story breathe — write as long as it needs to be
+- Minimum 400 words — Facebook readers expect depth
+- NO hashtags. NO bullet points. NO numbered lists.
+- This is storytelling, not a Twitter thread`,
   }
 
   const voiceContext = profile?.voice_examples?.length
@@ -139,7 +173,7 @@ Return ONLY valid JSON:
 
   async function generateWithGemini(systemPrompt: string, userPrompt: string): Promise<string> {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY!}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -158,15 +192,15 @@ Return ONLY valid JSON:
   }
 
   let rawContent: string
-  let provider = 'groq'
+  let provider = 'gemini'
 
   try {
-    rawContent = await generateWithGroq(systemPrompt, userPrompt)
-  } catch (groqError) {
-    console.warn('Groq failed, falling back to Gemini:', groqError)
-    provider = 'gemini'
+    rawContent = await generateWithGemini(systemPrompt, userPrompt)
+  } catch (geminiError) {
+    console.warn('Gemini failed, falling back to Groq:', geminiError)
+    provider = 'groq'
     try {
-      rawContent = await generateWithGemini(systemPrompt, userPrompt)
+      rawContent = await generateWithGroq(systemPrompt, userPrompt)
     } catch {
       console.error('Both providers failed')
       return NextResponse.json(

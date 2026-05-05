@@ -44,34 +44,14 @@ Adapt the format, length, and style completely for ${toPlatform}.
 Sound natural, not like a direct copy.
 Return only the repurposed post, no explanation.`
 
-    const generateWithGroq = async (_: string, userPrompt: string): Promise<string> => {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [{ role: 'user', content: userPrompt }],
-          temperature: 0.85,
-          max_tokens: 2048,
-        })
-      })
-      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content
-      if (!content) throw new Error('No content from Groq')
-      return content
-    }
-
-    const generateWithGemini = async (_: string, userPrompt: string): Promise<string> => {
+    const generateWithGemini = async (systemPrompt: string, userPrompt: string): Promise<string> => {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY!}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
             contents: [{ parts: [{ text: userPrompt }] }],
             generationConfig: { temperature: 0.85, maxOutputTokens: 2048 },
           }),
@@ -84,14 +64,38 @@ Return only the repurposed post, no explanation.`
       return content
     }
 
+    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
+      })
+      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from Groq')
+      return content
+    }
+
     let repurposed: string
 
     try {
-      repurposed = await generateWithGroq('', prompt)
-    } catch (groqError) {
-      console.warn('Groq failed, falling back to Gemini:', groqError)
+      repurposed = await generateWithGemini('', prompt)
+    } catch (geminiError) {
+      console.warn('Gemini failed, falling back to Groq:', geminiError)
       try {
-        repurposed = await generateWithGemini('', prompt)
+        repurposed = await generateWithGroq('', prompt)
       } catch {
         console.error('Both providers failed')
         return NextResponse.json({ error: 'Failed to repurpose' }, { status: 500 })
