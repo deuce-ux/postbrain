@@ -83,6 +83,7 @@ export default function WritePage() {
   const [voiceOpen, setVoiceOpen] = useState(false)
   const [voice, setVoice] = useState<VoiceSettings>(DEFAULT_VOICE)
   const [mobileTab, setMobileTab] = useState<'write' | 'output'>('write')
+  const [takeaway, setTakeaway] = useState('')
 
   // Generation
   const [generating, setGenerating] = useState(false)
@@ -314,7 +315,9 @@ export default function WritePage() {
           {/* Step 1: Idea */}
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="label">Your idea</label>
+              <label className="label">
+                {writeMode === 'from hook' ? 'YOUR HOOK' : writeMode === 'from experience' ? 'YOUR EXPERIENCE' : 'YOUR IDEA'}
+              </label>
               {fromIdeaBank && (
                 <button
                   onClick={() => { setFromIdeaBank(false); setIdea('') }}
@@ -328,11 +331,39 @@ export default function WritePage() {
               ref={textareaRef}
               value={idea}
               onChange={handleIdeaChange}
-              placeholder="Paste your idea, a topic, or describe an experience..."
+              placeholder={
+                writeMode === 'from hook' 
+                  ? "Write your opening line here. The first sentence that stops the scroll..."
+                  : writeMode === 'from experience'
+                  ? "Describe what happened. What did you do, see, realize, or go through? Be specific..."
+                  : "Paste your idea, a topic, or describe an experience..."
+              }
               rows={3}
               className="input-base resize-none overflow-hidden"
               style={{ minHeight: '80px', maxHeight: '200px' }}
             />
+            {writeMode === 'from hook' && (
+              <p className="text-xs text-[#6B6560] mt-2 animate-fade-in">
+                This becomes tweet 1 or your opening line. Make it punchy.
+              </p>
+            )}
+            {writeMode === 'from experience' && (
+              <p className="text-xs text-[#6B6560] mt-2 animate-fade-in">
+                The more specific you are, the better the post.
+              </p>
+            )}
+            {writeMode === 'from experience' && (
+              <div className="mt-4 animate-slide-up space-y-2">
+                <label className="label">WHAT&apos;S THE LESSON OR TAKEAWAY?</label>
+                <input
+                  type="text"
+                  value={takeaway}
+                  onChange={(e) => setTakeaway(e.target.value)}
+                  placeholder="What do you want people to walk away thinking?"
+                  className="input-base"
+                />
+              </div>
+            )}
             {idea.trim() && !showHooks && (
               <button
                 onClick={async () => {
@@ -502,11 +533,17 @@ export default function WritePage() {
             )}
           </section>
 
-          {/* Generate button */}
           <Button
             onClick={() => {
-              if (idea.trim()) {
+              if (!idea.trim()) return
+              if (writeMode === 'from hook') {
+                handleGenerate()
+              } else {
                 localStorage.setItem('clarification_idea', idea.trim())
+                localStorage.setItem('clarification_mode', writeMode)
+                if (writeMode === 'from experience') {
+                  localStorage.setItem('clarification_takeaway', takeaway.trim())
+                }
                 router.push('/clarify')
               }
             }}

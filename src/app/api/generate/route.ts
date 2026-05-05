@@ -137,15 +137,22 @@ Match the ${clarification.tone} tone throughout.
 ${clarification.story ? 'Weave the personal story/example naturally into the post.' : ''}
 ` : ''
 
+  const modeInstructions: Record<string, string> = {
+    'from hook': "The user has written their opening hook. Build the rest of the post around it. Use the hook as tweet 1 or opening line verbatim.",
+    'from experience': "The user has shared a personal experience. Find the insight or lesson in it and build a post around the story.",
+    'from idea': "The user has an idea they want to explore. Develop it into a full post."
+  }
+
 const userPrompt = `${platformInstructions[platform] || platformInstructions.twitter}
 
 ${structureInstructions}
 
 ${clarificationContext}
-The idea/topic to write about:
-"${idea}"
+INSTRUCTION BASED ON WRITE MODE:
+${modeInstructions[writingMode as string] || modeInstructions['from idea']}
 
-Write mode: ${writingMode || 'from idea'}
+The input to write about:
+"${idea}"
 
 Write the complete post now. Return only the post content, no explanation.`
 

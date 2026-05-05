@@ -35,10 +35,13 @@ export default function ClarifyPage() {
   const [loading, setLoading] = useState(true)
   const [target, setTarget] = useState<'write' | 'thread'>('write')
   const [generating, setGenerating] = useState(false)
+  const [mode, setMode] = useState('from idea')
 
   useEffect(() => {
     const storedIdea = localStorage.getItem('clarification_idea')
     const storedTarget = localStorage.getItem('clarification_target')
+    const storedMode = localStorage.getItem('clarification_mode')
+    const storedTakeaway = localStorage.getItem('clarification_takeaway')
     if (storedIdea) {
       setIdea(storedIdea)
       localStorage.removeItem('clarification_idea')
@@ -46,6 +49,18 @@ export default function ClarifyPage() {
     if (storedTarget === 'thread') {
       setTarget('thread')
       localStorage.removeItem('clarification_target')
+    }
+    if (storedMode) {
+      setMode(storedMode)
+      localStorage.removeItem('clarification_mode')
+    }
+    if (storedTakeaway) {
+      if (storedMode === 'from experience') {
+        setMainPoint(storedTakeaway || 'A personal experience')
+      }
+      localStorage.removeItem('clarification_takeaway')
+    } else if (storedMode === 'from experience') {
+      setMainPoint('A personal experience')
     }
     setLoading(false)
   }, [])
@@ -90,7 +105,7 @@ export default function ClarifyPage() {
       tone,
       story: story.trim(),
       platform: 'twitter',
-      writeMode: 'from idea',
+      writeMode: mode,
     }
 
     localStorage.setItem('clarification', JSON.stringify(clarification))
@@ -130,14 +145,16 @@ export default function ClarifyPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="label">What&apos;s your main point in one sentence?</label>
-            <Input
-              value={mainPoint}
-              onChange={(e) => setMainPoint(e.target.value)}
-              placeholder="Sum up what you want to say..."
-            />
-          </div>
+          {mode !== 'from experience' && (
+            <div className="space-y-2">
+              <label className="label">What&apos;s your main point in one sentence?</label>
+              <Input
+                value={mainPoint}
+                onChange={(e) => setMainPoint(e.target.value)}
+                placeholder="Sum up what you want to say..."
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="label">What tone?</label>
