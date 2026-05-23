@@ -8,6 +8,9 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: {
+        name: 'postbrain-auth-token',
+      },
       cookies: {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet) {
@@ -23,8 +26,13 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Never redirect API routes
-  if (pathname.startsWith('/api/')) {
+  // Never redirect API routes, static public files, or PWA assets
+  if (
+    pathname.startsWith('/api/') ||
+    pathname === '/sw.js' ||
+    pathname === '/manifest.json' ||
+    pathname.startsWith('/icons/')
+  ) {
     return NextResponse.next()
   }
 
@@ -43,7 +51,6 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
-
 
   return supabaseResponse
 }
