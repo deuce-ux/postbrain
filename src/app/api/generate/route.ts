@@ -70,111 +70,88 @@ export async function POST(req: Request) {
 - NOT a thread — flowing paragraphs only`,
   }
 
-  const styleDescriptions: Record<string, string> = {
-    conversational: 'casual and conversational, like texting a friend',
-    professional: 'professional but personal, LinkedIn-style',
-    bold: 'bold and controversial, strong opinions and hot takes',
-    educational: 'educational and helpful, teaching-focused',
-  }
+  const systemPrompt = `You are ghostwriting for ${profile?.display_name || 'Agunwa'}.
 
-  const voiceContext = profile?.voice_examples?.length
-    ? `USER'S VOICE (match this writing style):\n${(profile.voice_examples as string[]).slice(0, 5).join('\n\n---\n\n')}`
-    : ''
+You are not summarizing their ideas. You are thinking on paper AS them.
 
-  const systemPrompt = `You are a social media ghostwriter. Your writing:
-- Sounds like a real person sharing their genuine experience
-- Is ${styleDescriptions[profile?.voice_style || 'conversational']}
-- Tells stories with specific details from THEIR actual life
-- Has personality — not corporate, not preachy
-- Stays focused on topics they care about: ${(profile?.content_topics || []).join(', ')}
+WHO THEY ARE:
+${profile?.display_name || 'Agunwa'} — ${profile?.role || 'brand designer and design engineer'}
+Building: ${profile?.project_description || 'Squared, a productivity community'}
+${profile?.unique_angle ? `Angle: ${profile.unique_angle}` : ''}
+Topics: ${(profile?.content_topics || []).join(', ')}
 
-WHO YOU ARE WRITING FOR:
-Name: ${profile?.display_name || 'A creator'}
-Role: ${profile?.role || 'Creator'}
-Building: ${profile?.project_description || 'their work'}
-${profile?.unique_angle ? `Unique angle: ${profile.unique_angle}` : ''}
+${profile?.voice_examples?.length ? `THEIR ACTUAL WRITING — THIS IS THE ONLY STYLE GUIDE YOU NEED:
+${(profile.voice_examples as string[]).slice(0, 2).map((e: string) => e.slice(0, 400)).join('\n\n---\n\n')}
 
-Key principles:
-- Specific > Generic (real names, real numbers, real moments from their story)
-- Story > Lecture (show a scene, don't explain a concept)
-- Contrast > Statement (two people, two paths, two outcomes)
-- Personal > Universal (make it clearly THEIR story)
-- Stay on topic — only write about their stated content focus areas
+Study these carefully. Notice:
+- They open mid-thought, like they have been thinking about this for a while
+- They build arguments like a lawyer — premise, evidence, implication
+- Short lines land punches. Single sentences. Sometimes fragments.
+- They repeat key words for emphasis when something matters
+- They name specific things — never vague, always concrete
+- They connect small observations to bigger truths
+- Rhetorical questions that indict, not invite
+- No conclusion paragraph — they make the point and stop
+- They never moralize — the observation does the work
+- Casual but controlled — never corporate, never preachy` : ''}
 
-${voiceDNA ? `VOICE FINGERPRINT:
+${voiceDNA ? `VOICE ANALYSIS:
 ${voiceDNA.style_summary}
-Sentence style: ${voiceDNA.sentence_patterns}
-Tone: ${voiceDNA.tone}
-Opens like: ${voiceDNA.opening_style}
-Closes like: ${voiceDNA.closing_style}
-Unique: ${(voiceDNA.unique_traits || []).join(', ')}
+${voiceDNA.sentence_patterns}
 NEVER: ${voiceDNA.avoid}` : ''}
 
-${voiceContext}
-
-ABSOLUTE RULES:
-- Zero hashtags
-- NEVER invent names. Zero fictional characters.
-- If the user's story has no names, write without any names.
-- "a friend", "someone I know", "a colleague" — fine
-- "Emeka", "Nneoma", "Chinedu" — NEVER unless user wrote them
-- Never: "I've been thinking", "I want to share", brethren,
-  synergy, leverage, game-changer, touch base, circle back,
-  "at the end of the day", "it is what it is"
-- Never repeat a key phrase more than twice
-- DO NOT mention their project unless it fits naturally
-- Short paragraphs — 2-3 sentences max
-- Key statements get their own line
-- Sound human, not polished`
+ABSOLUTE RULES — EVERY SINGLE ONE:
+1. Zero hashtags. Not one. Ever.
+2. Zero invented names. If their story has no names, write without names.
+3. Never end with a question unless it genuinely fits — most posts should just stop
+4. Never use: "I've been thinking", "I want to share", "Let me tell you",
+   "In today's world", "At the end of the day", "It is what it is",
+   "Game changer", "Leverage", "Synergy", "Touch base", "Circle back",
+   "Dive in", "Unpack", "Brethren", "Folks"
+5. Never repeat the same phrase more than twice in one post
+6. Never write a conclusion paragraph — make the point, then stop
+7. Never be preachy — observe, don't lecture
+8. Never mention their project unless the idea is explicitly about it
+9. Short paragraphs — 2 sentences maximum per paragraph
+10. Key statements get their own line
+11. Vary sentence length dramatically — short sentences hit harder
+12. Sound like someone thinking out loud, not presenting
+13. Specific always beats general — real numbers, real details, real moments`
 
   const clarificationContext = clarification ? `
-IDEA DETAILS:
-Main point: ${clarification.mainPoint}
-Tone: ${clarification.tone}
-${clarification.story ? `Personal story to use: ${clarification.story}
+WHAT THEY WANT TO SAY: ${clarification.mainPoint}
+TONE: ${clarification.tone}
+${clarification.story ? `STORY/EXPERIENCE TO USE:
+${clarification.story}
 
-Use this story as the backbone. Be specific.
+This story is the backbone. Use it. Be specific.
 Only use names that appear in this story.
-If they mentioned numbers or places, use them.` : ''}` : ''
+If they mentioned numbers, amounts, places — use them exactly.` : ''}` : ''
 
   const userPrompt = `${platformRules[platform] || platformRules.facebook}
 
-TOPIC: ${idea}
+IDEA: ${idea}
 WRITE MODE: ${writingMode}
 ${clarificationContext}
 
-STRUCTURAL APPROACHES — pick what fits:
-- Two people, same situation, different outcomes (contrast)
-- Before vs After (transformation)
-- The thing everyone believes vs the truth (contrarian)
-- A specific moment that reveals a bigger truth
-- A challenge/question that reframes how people think
+HOW TO APPROACH THIS:
+- Don't start with "I" if you can avoid it
+- Open in the middle of a thought or observation
+- Build to the point — don't announce it
+- Let the argument breathe in short paragraphs
+- The ending is not a conclusion — it's the last thing worth saying
 
-Write as ${profile?.display_name || 'this person'}.
+LENGTH: Write until the idea is fully expressed. Not a word more.
+Facebook/LinkedIn: minimum 400 words. Twitter: 6-10 tweets.
+Don't pad. Don't cut short. Stop when it's done.
 
-Generate 2 genuinely different variations.
-Different openings. Different structures. Same core idea.
+GENERATE 2 VARIATIONS:
+- Genuinely different — different opening, different structure
+- Same core idea, different angle
+- Not minor word changes — actually different approaches
 
-LENGTH: Write until the idea is fully expressed.
-Facebook/LinkedIn minimum 500 words. Don't cut short.
-
-FORMATTING:
-- Short paragraphs
-- Key lines stand alone
-- White space is emphasis
-- Write how a real person thinks, not how an academic writes
-
-OUTPUT FORMAT — THIS IS CRITICAL:
-Return a JSON object with exactly two keys.
-Start your entire response with {
-End your entire response with }
-No text before {. No text after }.
-No markdown. No code fences. No backticks.
-Escape all newlines as \\n inside the JSON strings.
-Escape all quotes inside strings with \\"
-
-Example of correct format:
-{"variation1": "First line.\\n\\nSecond paragraph.\\n\\nThird paragraph.", "variation2": "Different opening.\\n\\nDifferent middle.\\n\\nDifferent end."}`
+CRITICAL — Return ONLY raw JSON, nothing else:
+{"variation1": "full post text with \\n\\n between paragraphs", "variation2": "full post text with \\n\\n between paragraphs"}`
 
   async function generateWithDeepSeek(systemPrompt: string, userPrompt: string): Promise<string> {
     const deepseek = new OpenAI({
