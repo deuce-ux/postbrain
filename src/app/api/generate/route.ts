@@ -81,7 +81,7 @@ ${profile?.unique_angle ? `Angle: ${profile.unique_angle}` : ''}
 Topics: ${(profile?.content_topics || []).join(', ')}
 
 ${profile?.voice_examples?.length ? `THEIR ACTUAL WRITING — THIS IS THE ONLY STYLE GUIDE YOU NEED:
-${(profile.voice_examples as string[]).slice(0, 2).map((e: string) => e.slice(0, 400)).join('\n\n---\n\n')}
+${(profile.voice_examples as string[]).slice(0, 1).map((e: string) => e.slice(0, 200)).join('\n\n---\n\n')}
 
 Study these carefully. Notice:
 - They open mid-thought, like they have been thinking about this for a while
@@ -141,9 +141,12 @@ HOW TO APPROACH THIS:
 - Let the argument breathe in short paragraphs
 - The ending is not a conclusion — it's the last thing worth saying
 
-LENGTH: Write until the idea is fully expressed. Not a word more.
-Facebook/LinkedIn: minimum 400 words. Twitter: 6-10 tweets.
-Don't pad. Don't cut short. Stop when it's done.
+LENGTH: Be concise. Both variations together must be under 600 words total.
+Facebook: 200-350 words per variation.
+LinkedIn: 200-300 words per variation.
+Twitter: 5-7 tweets per variation.
+Instagram: 100-200 words per variation.
+Quality over quantity. Make every sentence count.
 
 GENERATE 2 VARIATIONS:
 - Genuinely different — different opening, different structure
@@ -165,7 +168,7 @@ CRITICAL — Return ONLY raw JSON, nothing else:
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.85,
-      max_tokens: 1500,
+      max_tokens: 800,
       stream: false,
     })
     const content = completion.choices[0]?.message?.content
