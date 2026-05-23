@@ -253,7 +253,7 @@ export default function WritePage() {
       setGenerated(data.variation1 || '')
       setSelectedVariation(1)
       setMobileTab('output')
-      setGenerationProvider(data.provider || 'groq')
+      setGenerationProvider(data.provider || 'deepseek')
 
       setTimeout(() => {
         document.getElementById('output-panel')?.scrollIntoView({ 
@@ -706,7 +706,7 @@ export default function WritePage() {
                     ? 'bg-blue-50 text-blue-600'
                     : 'bg-orange-50 text-orange-600'
                 )}>
-                  {generationProvider === 'gemini' ? 'Gemini' : 'Groq'}
+                  {generationProvider === 'gemini' ? 'Gemini' : 'DeepSeek'}
                 </span>
               </div>
 
