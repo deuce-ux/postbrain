@@ -31,7 +31,7 @@ Return ONLY a JSON object:
           'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
         },
         body: JSON.stringify({
-          model: 'deepseek-v4-pro',
+          model: 'deepseek-chat',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }

@@ -44,7 +44,7 @@ Return only valid JSON, no explanation, no markdown backticks.`
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY!}`,
       },
       body: JSON.stringify({
-        model: 'deepseek-v4-pro',
+        model: 'deepseek-chat',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         max_tokens: 2048,

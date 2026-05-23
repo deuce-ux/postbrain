@@ -42,7 +42,7 @@ Return ONLY a JSON array of 8 strings, no explanation:
           'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
         },
         body: JSON.stringify({
-          model: 'deepseek-v4-pro',
+          model: 'deepseek-chat',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
