@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   console.log('[generate] user:', user?.id ?? null, 'authError:', authError?.message ?? null)
   if (!user) return NextResponse.json({ error: 'Unauthorized', detail: authError?.message ?? 'no session' }, { status: 401 })
 
-  const { idea, platform, clarification, writingMode } = await req.json()
+  const { idea, platform, clarification } = await req.json()
   console.log('Received platform:', platform)
 
   // Fetch profile for voice DNA
@@ -18,121 +18,45 @@ export async function POST(req: Request) {
     .eq('id', user.id)
     .single()
 
-  function buildProfileContext(profile: Record<string, unknown> | null): string {
-    const styleDescriptions: Record<string, string> = {
-      conversational: 'casual and conversational, like texting a friend',
-      professional: 'professional but personal, LinkedIn-style',
-      bold: 'bold and controversial, strong opinions and hot takes',
-      educational: 'educational and helpful, teaching-focused',
-    }
-
-    const parts = [
-      `Name: ${profile?.display_name || 'A creator'}`,
-      `Role: ${profile?.role || 'Creator'}`,
-      `Building: ${profile?.project_description || 'A project'}`,
-      `Unique angle: ${profile?.unique_angle || 'Sharing my journey'}`,
-      `Content focus: ${((profile?.content_topics as string[]) || []).join(', ') || 'Building in public'}`,
-      `Writing style: ${styleDescriptions[(profile?.voice_style as string) || 'conversational']}`,
-    ]
-
-    return parts.join('\n')
-  }
-
-  const voiceContext = profile?.voice_examples?.length
-    ? `\n\nMATCH THIS WRITING STYLE:\n${(profile.voice_examples as string[]).slice(0, 1).map((e: string) => e.slice(0, 250)).join('\n---\n')}`
+  const voiceContext = profile?.voice_examples?.length > 0
+    ? `USER'S VOICE (match this writing style):\n${profile!.voice_examples.slice(0, 3).join('\n\n---\n\n')}`
     : ''
 
   const platformRules: Record<string, string> = {
-    twitter: `For X Thread:
-- Start with hook tweet (1-2 sentences max)
-- Break into 5-8 tweets
-- Each tweet = 1-3 sentences
-- Use line breaks for emphasis
-- End with summary or reflection
-- NO hashtags`,
-
-    linkedin: `For LinkedIn:
-- Opening hook that stops the scroll
-- Short paragraphs - 2-3 sentences each
-- Single-line paragraphs for emphasis
-- Like this.
-- 400-600 words
-- Professional but conversational
-- NO hashtags`,
-
-    instagram: `For Instagram:
-- First 2 lines are the hook before "more"
-- Short punchy paragraphs
-- Line breaks for readability
-- Casual friend-to-friend energy
-- NO hashtags`,
-
-    facebook: `For Facebook:
-- 400-700 words
-- Story-driven with setup/middle/end
-- Personal and vulnerable
-- Conversational like talking to friends
-- Short paragraphs — 2-3 sentences max
-- Key lines stand alone
-- NO hashtags
-- NOT a thread — flowing paragraphs`,
+    twitter: 'For X Thread: Start with hook tweet (1-2 sentences max), break into 5-8 tweets, each tweet = 1-3 sentences, use line breaks for emphasis, end with summary. NO hashtags.',
+    linkedin: 'For LinkedIn: 1,300-2,000 characters, conversational not corporate, single-line paragraphs for emphasis, optional engagement question at end. NO hashtags.',
+    instagram: 'For Instagram: Line breaks for readability, visual/emotional language, emojis only if fits voice, 2-3 sentence paragraphs, questions to drive comments. NO hashtags.',
+    facebook: 'For Facebook: 500-1,000 words, story-driven with setup/middle/end, personal and vulnerable, conversational. NO hashtags.',
   }
 
-  const systemPrompt = `You are a social media ghostwriter. Your writing:
-- Sounds like a real person sharing their genuine experience
-- Is ${(profile?.voice_style as string) || 'conversational'}
-- Tells stories with specific details from THEIR actual project
-- Has personality - not corporate, not preachy
-- Stays focused on topics they care about: ${((profile?.content_topics as string[]) || []).join(', ')}
+  const systemPrompt = `You are helping write a social media post in the user's authentic voice.
 
-Key principles:
-- Specific > Generic (use real details about their life and work)
-- Story > Lecture (show, don't tell)
-- Personal > Universal (make it clearly THEIR story)
-- Stay on topic (don't mention things outside their focus areas)
-
-AVOID:
-- "I'm excited to share..."
-- Generic advice that could apply to anyone
-- Topics outside their stated content focus
-- Hashtags — zero, none, ever
-- Invented names — only use names from user's story
-- Ending every post with a question — only when it genuinely fits
-- "Brethren", "folks", "synergy", "leverage", "game-changer"
-- Preachy conclusions`
-
-  const clarificationContext = clarification ? `
-USER'S IDEA DETAILS:
-Topic: ${idea}
-Main point: ${clarification.mainPoint}
-Tone: ${clarification.tone}
-${clarification.story ? `Specific example/story: ${clarification.story}` : ''}` : `Topic: ${idea}`
-
-  const userPrompt = `Write a social media post.
-
-${platformRules[platform] || platformRules.facebook}
-
-User profile:
-${buildProfileContext(profile)}
 ${voiceContext}
 
-${clarificationContext}
+USER'S IDEA:
+Topic: ${idea}
+Main point: ${clarification?.mainPoint || ''}
+Tone: ${clarification?.tone || 'Honest/Vulnerable'}
+${clarification?.story ? `Specific example: ${clarification.story}` : ''}
 
-Write mode: ${writingMode}
+PLATFORM: ${platform}
 
 CRITICAL RULES:
 1. Write in their voice - match vocabulary, rhythm, tone from samples
-2. DO NOT force business/project mentions unless idea is explicitly about it
-3. Be specific - numbers, names from their story, concrete details
+2. DO NOT force business mentions unless idea is explicitly about it
+3. Be specific - numbers, names, concrete details
 4. Sound human - like texting a friend, not writing an essay
 5. Keep their personality and quirks
-6. Short paragraphs, varied sentence length
-7. Key statements get their own line
 
-Generate 2 genuinely different variations. Make them actually different.
+${platformRules[platform] || platformRules.facebook}
 
-Return ONLY valid JSON, no markdown, no backticks:
-{"variation1": "post text with \\n\\n between paragraphs", "variation2": "post text with \\n\\n between paragraphs"}`
+Generate 2 genuinely different variations. Return ONLY valid JSON:
+{
+  "variation1": "full post text",
+  "variation2": "full post text"
+}`
+
+  const userPrompt = 'Generate the post variations now.'
 
   async function generateWithDeepSeek(systemPrompt: string, userPrompt: string): Promise<string> {
     const deepseek = new OpenAI({
