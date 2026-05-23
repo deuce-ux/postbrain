@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  console.log('[generate] user:', user?.id ?? null, 'authError:', authError?.message ?? null)
+  if (!user) return NextResponse.json({ error: 'Unauthorized', detail: authError?.message ?? 'no session' }, { status: 401 })
 
   const { idea, platform, clarification, writingMode } = await req.json()
   console.log('Received platform:', platform)
