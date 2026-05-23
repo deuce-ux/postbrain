@@ -700,14 +700,11 @@ export default function WritePage() {
               {/* Top bar */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-text-secondary">Generated Post</span>
-                <span className={clsx(
-                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                  generationProvider === 'gemini'
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'bg-orange-50 text-orange-600'
-                )}>
-                  {generationProvider === 'gemini' ? 'Gemini' : 'DeepSeek'}
-                </span>
+                {generationProvider && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#F3F4F6] text-[#6B7280]">
+                    {generationProvider.charAt(0).toUpperCase() + generationProvider.slice(1)}
+                  </span>
+                )}
               </div>
 
               {/* Platform + counts */}
