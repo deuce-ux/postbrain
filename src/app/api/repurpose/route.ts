@@ -1,3 +1,4 @@
+import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -28,25 +29,21 @@ Sound natural, not like a direct copy.
 Return only the repurposed post, no explanation.`
 
     const generateWithDeepSeek = async (systemPrompt: string, userPrompt: string): Promise<string> => {
-      const response = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.85,
-          max_tokens: 2048,
-        })
+      const deepseek = new OpenAI({
+        baseURL: 'https://api.deepseek.com',
+        apiKey: process.env.DEEPSEEK_API_KEY!,
       })
-      if (!response.ok) throw new Error(`DeepSeek error: ${response.status}`)
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content
+      const completion = await deepseek.chat.completions.create({
+        model: 'deepseek-v4-pro',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.85,
+        max_tokens: 1500,
+        stream: false,
+      })
+      const content = completion.choices[0]?.message?.content
       if (!content) throw new Error('No content from DeepSeek')
       return content
     }
