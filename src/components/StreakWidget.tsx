@@ -17,8 +17,18 @@ export function StreakWidget() {
     fetch('/api/stats')
       .then(r => r.json())
       .then(data => {
-        setStats({ ...data, loading: false })
-        setGoalInput(String(data.weeklyGoal || 5))
+        if (data.error) {
+          setStats(s => ({ ...s, loading: false }))
+          return
+        }
+        setStats({
+          streak: data.streak ?? 0,
+          thisWeekPosts: data.thisWeekPosts ?? 0,
+          weeklyGoal: data.weeklyGoal ?? 5,
+          totalPosts: data.totalPosts ?? 0,
+          loading: false,
+        })
+        setGoalInput(String(data.weeklyGoal ?? 5))
       })
       .catch(() => setStats(s => ({ ...s, loading: false })))
   }, [])
@@ -35,14 +45,16 @@ export function StreakWidget() {
     setEditingGoal(false)
   }
 
-  const progress = Math.min((stats.thisWeekPosts / stats.weeklyGoal) * 100, 100)
+  const progress = stats.weeklyGoal > 0
+    ? Math.min((stats.thisWeekPosts / stats.weeklyGoal) * 100, 100)
+    : 0
+
+  const remaining = Math.max(stats.weeklyGoal - stats.thisWeekPosts, 0)
 
   return (
     <div className="bg-white border border-[#E8E5E0] rounded-2xl p-5 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-[#1A1714]">
-          Your Progress
-        </h3>
+        <h3 className="text-sm font-medium text-[#1A1714]">Your Progress</h3>
         <button
           onClick={() => setEditingGoal(!editingGoal)}
           className="text-xs text-[#4F46E5]"
@@ -73,31 +85,30 @@ export function StreakWidget() {
       )}
 
       <div className="grid grid-cols-3 gap-3 mb-4">
+        {/* Day streak */}
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Flame size={16} className="text-orange-500" />
-            <span className="text-2xl font-semibold text-[#1A1714]">
-              {stats.streak}
-            </span>
-          </div>
+          <Flame size={18} className="text-orange-500 mx-auto mb-1" />
+          <p className="text-2xl font-semibold text-[#1A1714]">
+            {stats.loading ? '—' : stats.streak}
+          </p>
           <p className="text-xs text-[#6B6560]">day streak</p>
         </div>
+
+        {/* This week */}
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Target size={16} className="text-[#4F46E5]" />
-            <span className="text-2xl font-semibold text-[#1A1714]">
-              {stats.thisWeekPosts}/{stats.weeklyGoal}
-            </span>
-          </div>
+          <Target size={18} className="text-[#4F46E5] mx-auto mb-1" />
+          <p className="text-2xl font-semibold text-[#1A1714]">
+            {stats.loading ? '—' : `${stats.thisWeekPosts}/${stats.weeklyGoal}`}
+          </p>
           <p className="text-xs text-[#6B6560]">this week</p>
         </div>
+
+        {/* Total posts */}
         <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingUp size={16} className="text-green-500" />
-            <span className="text-2xl font-semibold text-[#1A1714]">
-              {stats.totalPosts}
-            </span>
-          </div>
+          <TrendingUp size={18} className="text-green-500 mx-auto mb-1" />
+          <p className="text-2xl font-semibold text-[#1A1714]">
+            {stats.loading ? '—' : stats.totalPosts}
+          </p>
           <p className="text-xs text-[#6B6560]">total posts</p>
         </div>
       </div>
@@ -109,9 +120,11 @@ export function StreakWidget() {
         />
       </div>
       <p className="text-xs text-[#6B6560] mt-1.5 text-right">
-        {stats.thisWeekPosts >= stats.weeklyGoal
+        {stats.loading
+          ? ''
+          : stats.thisWeekPosts >= stats.weeklyGoal
           ? '🎉 Goal reached!'
-          : `${stats.weeklyGoal - stats.thisWeekPosts} more to reach your goal`}
+          : `${remaining} more to reach your goal`}
       </p>
     </div>
   )
