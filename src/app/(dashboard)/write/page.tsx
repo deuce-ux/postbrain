@@ -248,9 +248,24 @@ export default function WritePage() {
       const data = await res.json()
       console.log('Generation response:', data)
       if (!res.ok) throw new Error(data.error || 'Generation failed')
-      setVariation1(data.variation1 || '')
-      setVariation2(data.variation2 || '')
-      setGenerated(data.variation1 || '')
+
+      let v1 = data.variation1 || ''
+      let v2 = data.variation2 || ''
+
+      // If v1 still looks like raw JSON, parse it
+      if (v1.startsWith('{') || v1.startsWith('{"')) {
+        try {
+          const parsed = JSON.parse(v1)
+          v1 = parsed.variation1 || v1
+          v2 = parsed.variation2 || v2
+        } catch {
+          // keep as is
+        }
+      }
+
+      setVariation1(v1)
+      setVariation2(v2)
+      setGenerated(v1)
       setSelectedVariation(1)
       setMobileTab('output')
       setGenerationProvider(data.provider || 'deepseek')

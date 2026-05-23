@@ -139,6 +139,7 @@ Return ONLY valid JSON, no markdown, no backticks:
       baseURL: 'https://api.deepseek.com',
       apiKey: process.env.DEEPSEEK_API_KEY!,
     })
+    // @ts-expect-error - thinking is a DeepSeek-specific param not in the OpenAI SDK types
     const completion = await deepseek.chat.completions.create({
       model: 'deepseek-v4-pro',
       messages: [
@@ -146,8 +147,9 @@ Return ONLY valid JSON, no markdown, no backticks:
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.85,
-      max_tokens: 1200,
+      max_tokens: 2000,
       stream: false,
+      thinking: { type: 'disabled' },
     })
     const content = completion.choices[0]?.message?.content
     if (!content) throw new Error('No content from DeepSeek')
@@ -175,10 +177,20 @@ Return ONLY valid JSON, no markdown, no backticks:
   }
 
   function parseVariations(raw: string): { v1: string, v2: string } {
-    const cleaned = raw
+    // Remove thinking tags that DeepSeek V4-Pro adds
+    let cleaned = raw
+      .replace(/<think>[\s\S]*?<\/think>/g, '')
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim()
+
+    // Find the JSON object - look for { "variation
+    const jsonStart = cleaned.indexOf('{')
+    const jsonEnd = cleaned.lastIndexOf('}')
+
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
+    }
 
     try {
       const parsed = JSON.parse(cleaned)
@@ -187,20 +199,17 @@ Return ONLY valid JSON, no markdown, no backticks:
         v2: parsed.variation2 || parsed.variation_2 || ''
       }
     } catch {
-      console.log('Direct parse failed, trying extraction')
-    }
+      console.error('Parse failed on:', cleaned.slice(0, 200))
 
-    const v1Match = cleaned.match(/"variation1"\s*:\s*"([\s\S]*?)(?:"\s*,\s*"variation2"|"\s*\}$)/)
-    const v2Match = cleaned.match(/"variation2"\s*:\s*"([\s\S]*?)(?:"\s*\}|"\s*$)/)
+      // Manual extraction
+      const v1Match = cleaned.match(/"variation1"\s*:\s*"([\s\S]*?)",\s*"variation2"/)
+      const v2Match = cleaned.match(/"variation2"\s*:\s*"([\s\S]*?)"\s*\}/)
 
-    if (v1Match) {
       return {
-        v1: v1Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'),
+        v1: v1Match ? v1Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : cleaned,
         v2: v2Match ? v2Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : ''
       }
     }
-
-    return { v1: cleaned, v2: '' }
   }
 
   function cleanText(text: string): string {
