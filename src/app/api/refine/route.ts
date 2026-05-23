@@ -37,7 +37,31 @@ Rewrite the post based on this instruction.
 Keep everything that works. Only change what was asked.
 Return only the refined post text, nothing else.`
 
-    const generateWithGemini = async (): Promise<string> => {
+    const generateWithDeepSeek = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.8,
+          max_tokens: 4096,
+        })
+      })
+      if (!response.ok) throw new Error(`DeepSeek error: ${response.status}`)
+      const data = await response.json()
+      const text = data.choices?.[0]?.message?.content
+      if (!text) throw new Error('No content from DeepSeek')
+      return text
+    }
+
+    const generateWithGemini = async (systemPrompt: string, userPrompt: string): Promise<string> => {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY!}`,
         {
@@ -53,39 +77,21 @@ Return only the refined post text, nothing else.`
       if (!response.ok) throw new Error(`Gemini error: ${response.status}`)
       const data = await response.json()
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-      if (!text) throw new Error('No content')
-      return text
-    }
-
-    const generateWithGroq = async (): Promise<string> => {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.8,
-          max_tokens: 4096,
-        })
-      })
-      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
-      const data = await response.json()
-      const text = data.choices?.[0]?.message?.content
-      if (!text) throw new Error('No content')
+      if (!text) throw new Error('No content from Gemini')
       return text
     }
 
     let refined: string
     try {
-      refined = await generateWithGemini()
-    } catch {
-      refined = await generateWithGroq()
+      refined = await generateWithDeepSeek(systemPrompt, userPrompt)
+    } catch (deepseekError) {
+      console.warn('DeepSeek failed, falling back to Gemini:', deepseekError)
+      try {
+        refined = await generateWithGemini(systemPrompt, userPrompt)
+      } catch {
+        console.error('Both providers failed')
+        return NextResponse.json({ error: 'Refinement failed' }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ content: refined.trim() })

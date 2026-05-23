@@ -34,6 +34,30 @@ Generate exactly 8 hooks using these different types:
 Return ONLY a JSON array of 8 strings, no explanation:
 ["hook1", "hook2", "hook3", "hook4", "hook5", "hook6", "hook7", "hook8"]`
 
+    const generateWithDeepSeek = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
+      })
+      if (!response.ok) throw new Error(`DeepSeek error: ${response.status}`)
+      const data = await response.json()
+      const content = data.choices?.[0]?.message?.content
+      if (!content) throw new Error('No content from DeepSeek')
+      return content
+    }
+
     const generateWithGemini = async (systemPrompt: string, userPrompt: string): Promise<string> => {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY!}`,
@@ -54,40 +78,16 @@ Return ONLY a JSON array of 8 strings, no explanation:
       return content
     }
 
-    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.85,
-          max_tokens: 2048,
-        })
-      })
-      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
-      const data = await response.json()
-      const content = data.choices?.[0]?.message?.content
-      if (!content) throw new Error('No content from Groq')
-      return content
-    }
-
     let rawContent: string
-    let provider = 'gemini'
+    let provider = 'deepseek'
 
     try {
-      rawContent = await generateWithGemini('', prompt)
-    } catch (geminiError) {
-      console.warn('Gemini failed, falling back to Groq:', geminiError)
-      provider = 'groq'
+      rawContent = await generateWithDeepSeek('', prompt)
+    } catch (deepseekError) {
+      console.warn('DeepSeek failed, falling back to Gemini:', deepseekError)
+      provider = 'gemini'
       try {
-        rawContent = await generateWithGroq('', prompt)
+        rawContent = await generateWithGemini('', prompt)
       } catch {
         console.error('Both providers failed')
         return NextResponse.json({ error: 'Failed to generate hooks' }, { status: 500 })

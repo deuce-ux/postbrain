@@ -165,7 +165,7 @@ FORMATTING:
 
 OUTPUT FORMAT — THIS IS CRITICAL:
 Return a JSON object with exactly two keys.
-Start your entire response with { 
+Start your entire response with {
 End your entire response with }
 No text before {. No text after }.
 No markdown. No code fences. No backticks.
@@ -175,15 +175,15 @@ Escape all quotes inside strings with \\"
 Example of correct format:
 {"variation1": "First line.\\n\\nSecond paragraph.\\n\\nThird paragraph.", "variation2": "Different opening.\\n\\nDifferent middle.\\n\\nDifferent end."}`
 
-  async function generateWithGroq(systemPrompt: string, userPrompt: string): Promise<string> {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  async function generateWithDeepSeek(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
+        'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'deepseek-chat',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -192,10 +192,10 @@ Example of correct format:
         max_tokens: 4096,
       })
     })
-    if (!response.ok) throw new Error(`Groq error: ${response.status}`)
+    if (!response.ok) throw new Error(`DeepSeek error: ${response.status}`)
     const data = await response.json()
     const content = data.choices?.[0]?.message?.content
-    if (!content) throw new Error('No content from Groq')
+    if (!content) throw new Error('No content from DeepSeek')
     return content
   }
 
@@ -220,13 +220,11 @@ Example of correct format:
   }
 
   function parseVariations(raw: string): { v1: string, v2: string } {
-    // Remove markdown code blocks
     const cleaned = raw
       .replace(/```json\n?/g, '')
       .replace(/```\n?/g, '')
       .trim()
-    
-    // Try direct JSON parse
+
     try {
       const parsed = JSON.parse(cleaned)
       return {
@@ -234,45 +232,42 @@ Example of correct format:
         v2: parsed.variation2 || parsed.variation_2 || ''
       }
     } catch {
-      // JSON parse failed — try to extract manually
       console.log('Direct parse failed, trying extraction')
     }
-    
-    // Try to extract variation1 manually
+
     const v1Match = cleaned.match(/"variation1"\s*:\s*"([\s\S]*?)(?:"\s*,\s*"variation2"|"\s*\}$)/)
     const v2Match = cleaned.match(/"variation2"\s*:\s*"([\s\S]*?)(?:"\s*\}|"\s*$)/)
-    
+
     if (v1Match) {
       return {
         v1: v1Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"'),
         v2: v2Match ? v2Match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : ''
       }
     }
-    
-    // Last resort — return raw as v1
+
     return { v1: cleaned, v2: '' }
   }
 
   function cleanText(text: string): string {
     return text
-      .replace(/\u2018|\u2019/g, "'")
-      .replace(/\u201C|\u201D/g, '"')
-      .replace(/\u2013/g, '-')
-      .replace(/\u2014/g, '--')
+      .replace(/‘|’/g, "'")
+      .replace(/“|”/g, '"')
+      .replace(/–/g, '-')
+      .replace(/—/g, '--')
       .replace(/\\n/g, '\n')
       .trim()
   }
 
   let rawContent: string
-  let provider = 'gemini'
+  let provider = 'deepseek'
 
   try {
-    rawContent = await generateWithGemini(systemPrompt, userPrompt)
-  } catch (geminiError) {
-    console.warn('Gemini failed, falling back to Groq:', geminiError)
-    provider = 'groq'
+    rawContent = await generateWithDeepSeek(systemPrompt, userPrompt)
+  } catch (deepseekError) {
+    console.warn('DeepSeek failed, falling back to Gemini:', deepseekError)
+    provider = 'gemini'
     try {
-      rawContent = await generateWithGroq(systemPrompt, userPrompt)
+      rawContent = await generateWithGemini(systemPrompt, userPrompt)
     } catch {
       console.error('Both providers failed')
       return NextResponse.json(
@@ -282,7 +277,6 @@ Example of correct format:
     }
   }
 
-  // After getting content:
   const { v1, v2 } = parseVariations(rawContent)
   const variation1 = cleanText(v1)
   const variation2 = cleanText(v2)
@@ -291,7 +285,6 @@ Example of correct format:
   console.log('Parsed variation2 length:', variation2.length)
   console.log('variation1 preview:', variation1.slice(0, 100))
 
-  // Save variation1 to DB
   if (variation1) {
     await supabase.from('generated_posts').insert({
       user_id: user.id,

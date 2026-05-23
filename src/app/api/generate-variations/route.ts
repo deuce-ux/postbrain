@@ -23,6 +23,30 @@ Return ONLY a JSON object:
   "concise": "50% shorter, every word earns its place, tight and sharp"
 }`
 
+    const generateWithDeepSeek = async (systemPrompt: string, userPrompt: string): Promise<string> => {
+      const response = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY!}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.85,
+          max_tokens: 2048,
+        })
+      })
+      if (!response.ok) throw new Error(`DeepSeek error: ${response.status}`)
+      const data = await response.json()
+      const text = data.choices?.[0]?.message?.content
+      if (!text) throw new Error('No content from DeepSeek')
+      return text
+    }
+
     const generateWithGemini = async (systemPrompt: string, userPrompt: string): Promise<string> => {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY!}`,
@@ -43,38 +67,14 @@ Return ONLY a JSON object:
       return text
     }
 
-    const generateWithGroq = async (systemPrompt: string, userPrompt: string): Promise<string> => {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY!}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.85,
-          max_tokens: 2048,
-        })
-      })
-      if (!response.ok) throw new Error(`Groq error: ${response.status}`)
-      const data = await response.json()
-      const text = data.choices?.[0]?.message?.content
-      if (!text) throw new Error('No content from Groq')
-      return text
-    }
-
     let rawContent: string
 
     try {
-      rawContent = await generateWithGemini('', prompt)
-    } catch (geminiError) {
-      console.warn('Gemini failed, falling back to Groq:', geminiError)
+      rawContent = await generateWithDeepSeek('', prompt)
+    } catch (deepseekError) {
+      console.warn('DeepSeek failed, falling back to Gemini:', deepseekError)
       try {
-        rawContent = await generateWithGroq('', prompt)
+        rawContent = await generateWithGemini('', prompt)
       } catch {
         console.error('Both providers failed')
         return NextResponse.json({ error: 'Failed to generate variations' }, { status: 500 })
